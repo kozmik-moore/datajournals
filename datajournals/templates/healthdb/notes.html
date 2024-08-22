@@ -1,0 +1,10 @@
+{% extends 'healthdb/index.html' %}
+
+{% block subtitle %}Notes{% endblock %}
+
+{% block subcontent %}
+{{ noteslayout(
+    databasename='health',
+    paginator=paginator
+) }}
+{% endblock %}

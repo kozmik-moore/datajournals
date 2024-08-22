@@ -1,0 +1,48 @@
+{% extends 'sleepdb/index.html' %}
+{% from 'sleepdb/macros.html' import sessionCard %}
+
+{% block subtitle %}Add Note{% endblock %}
+
+{% block subcontent %}
+
+<div class="row justify-content-between">
+    <div class="col">
+        <h1>Create note</h1>
+    </div>
+</div>
+<br>
+
+<form method="POST" action="">
+    {{ form.csrf_token }}
+
+    <div class="row row-cols-1 row-cols-sm-2 g-4">
+
+        <!-- Note -->
+        <div class="col">
+            {{ form.note(class='form-control', style='height: 100%;', placeholder='Add a note...', rows=10) }}
+        </div>
+        <div class="col">
+            {{ sessionCard(record) }}
+        </div>
+        <div class="col">
+            <div class="row row-cols-2 g-2 mb-2">
+                <div class="col-auto">
+                    {{ form.important(class='form-check-input') }}
+                </div>
+                <div class="col-auto">
+                    {{ form.important.label(class='form-check-label') }}
+                </div>
+            </div>
+            <div class="row row-col-2 g-2">
+                <div class="col-auto">{{ form.submit(class="btn btn-primary") }}</div>
+                <div class="col-auto">
+                    <a type="button" class="btn btn-primary" href="javascript:history.back()">Cancel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br>
+</form>
+<br>
+
+{% endblock %}

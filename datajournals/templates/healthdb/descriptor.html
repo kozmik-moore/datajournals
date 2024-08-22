@@ -1,0 +1,14 @@
+{% extends 'healthdb/index.html' %}
+{% from 'healthdb/macros.html' import createRecordsTable %}
+
+{% block subtitle %}Descriptor: descriptor.tag{% endblock %}
+
+{% block subcontent %}
+{{ taglayout(
+    databasename='health',
+    tagtype='descriptor',
+    tagobject=descriptor,
+    paginator=paginator,
+    recordsection=createRecordsTable(paginator, typecol=False)
+) }}
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends 'dreamdb/index.html' %}
+
+{% block subtitle %}Add Record{% endblock %}
+
+{% block subcontent %}
+<div class="row">
+    <div class="col">
+        <h1>Add Record</h1>
+    </div>
+</div>
+<br>
+
+<script type="module">
+    import Tags from "https://cdn.jsdelivr.net/gh/lekoala/bootstrap5-tags@master/tags.js";
+    Tags.init("select", {separator: '|,|', addOnBlur:'true', allowNew: 'true', allowClear: 'false'});
+</script>
+
+<form method="POST" action="">
+    {{ form.csrf_token }}
+
+    <!-- Record -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.record.label(class='form-label') }}:
+            {{ form.record(class='form-control', rows=10, placeholder='Add a record...') }}
+        </div>
+    </div>
+
+    <!-- Record date -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.record_date.label(class='form-label') }}:
+            {{ form.record_date(class='form-control') }}
+        </div>
+    </div>
+
+    <!-- Time of day -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.time_of_day.label(class='form-label') }}:
+            {{ form.time_of_day(class='form-control') }}
+        </div>
+    </div>
+
+    <!-- Sleep type -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.sleep_type.label(class='form-label') }}:
+            {{ form.sleep_type(class='form-control') }}
+        </div>
+    </div>
+
+    <!-- Subject Tags -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.subjects.label(class='form-label') }}
+            {{ form.subjects(class='form-select') }}
+        </div>
+    </div>
+
+    <!-- Descriptor Tags -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.descriptors.label(class='form-label') }}
+            {{ form.descriptors(class='form-select') }}
+        </div>
+    </div>
+
+    <!-- Emotion Tags -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.emotions.label(class='form-label') }}
+            {{ form.emotions(class='form-select') }}
+        </div>
+    </div>
+
+    <!-- "Add note" check -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.add_note(class='form-check-input') }}
+            {{ form.add_note.label(class='form-check-label') }}
+        </div>
+    </div>
+
+    <!-- Submit and cancel buttons -->
+    <div class="row">
+        <div class="col-auto pe-1">{{ form.submit(class="btn btn-primary") }}</div>
+        <div class="col-auto px-0">
+            <a type="button" class="btn btn-primary" href="javascript:history.back()">Cancel</a>
+        </div>
+    </div>
+    
+</form>
+
+<script src="{{ url_for('static', filename='datefunctions.js') }}"></script>
+<script>
+    setDate('record_date');
+</script>
+{% endblock %}

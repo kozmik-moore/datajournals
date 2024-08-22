@@ -1,0 +1,17 @@
+{% extends 'sleepdb/index.html' %}
+{% from 'sleepdb/macros.html' import createRecordsTable %}
+
+{% block subtitle %}Emotion - {{ sensation.tag }}{% endblock %}
+
+{% block subcontent %}
+
+{{ taglayout(
+    databasename='sleep',
+    tagtype='sensation',
+    recordsection=createRecordsTable(records_paginator, has_tags=False),
+    tagobject=sensation,
+    paginator=records_paginator
+    ) 
+}}
+
+{% endblock %}

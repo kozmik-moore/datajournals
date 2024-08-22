@@ -1,0 +1,792 @@
+<!-- Returns string of datetime range for a given sleepdb record -->
+{% macro datetimerange_stringify(record, dateformat='%A, %B %d, %Y', timeformat='%H:%M') %}
+    {% set stop_time = "" %}
+    {% set stop_date = record.time_rise %}
+    {% if stop_date %}
+        {% set stop_time = stop_date.strftime(timeformat) %}
+        {% set stop_date = stop_date.strftime(dateformat) %}
+    {% else %}
+        {% set stop_date = "" %}
+    {% endif %}
+    {% set start_date = record.time_retire.strftime(dateformat) %}
+    {% set start_time = record.time_retire.strftime(timeformat) %}
+
+    {% if stop_date == "" %}
+        {{ start_date }}, {{ start_time }} - 
+    {% elif start_date == stop_date %}
+        {{ start_date }}, {{ start_time }} - {{ stop_time }}
+    {% else %}
+        {{ start_date }}, {{ start_time }} - {{ stop_date }}, {{ stop_time }}
+    {% endif %}
+{% endmacro %}
+
+<!-- Returns string of date range for a given sleepdb record -->
+{% macro daterange_stringify(record, dateformat='%A, %B %d, %Y', monthfmt='%B') %}
+    {% if not record.time_rise %}
+    {{ record.time_retire.strftime(monthfmt + ' %d, %Y -') }}
+    {% elif record.time_retire.year != record.time_rise.year %}
+    {{ record.time_retire.strftime(monthfmt + ' %d, %Y') }} - {{ record.time_rise.strftime(monthfmt + ' %d, %Y') }}
+    {% elif record.time_retire.month != record.time_rise.month %}
+    {{ record.time_retire.strftime(monthfmt + ' %d') }} - {{ record.time_rise.strftime(monthfmt + ' %d, %Y') }}
+    {% elif record.time_retire.day != record.time_rise.day %}
+    {{ record.time_retire.strftime(monthfmt + ' %d') }} - {{ record.time_rise.strftime('%d, %Y') }}
+    {% else %}
+    {{ record.time_retire.strftime(monthfmt + ' %d, %Y') }}
+    {% endif %}
+{% endmacro %}
+
+<!-- Returns string of time range for a given sleepdb record -->
+{% macro timerange_stringify(record, timeformat='%H:%M') %}
+    {% set stop_time = "" %}
+    {% set stop_date = record.time_rise %}
+    {% if stop_date %}
+        {% set stop_time = stop_date.strftime(timeformat) %}
+    {% endif %}
+    {% set start_time = record.time_retire.strftime(timeformat) %}
+    
+    {{ start_time }} - {{ stop_time }}
+{% endmacro %}
+
+<!-- Returns string of day of week range for a given sleepdb record -->
+{% macro dowrange_stringify(record, dowformat='%a') %}
+    {% if not record.time_rise %}
+    {{ record.time_retire.strftime(dowformat) }}
+    {% elif record.time_retire.date() != record.time_rise.date() %}
+    {{ record.time_retire.strftime(dowformat) }} - {{ record.time_rise.strftime(dowformat) }}
+    {% else %}
+    {{ record.time_retire.strftime(dowformat) }}
+    {% endif %}
+{% endmacro %}
+
+<!-- Returns tuple of strings for date and dow for a given date, in stacked rows -->
+{% macro dateparts_stringify(date, monthfmt='%B', dowfmt='%a', displaytime=False) %}
+    {% set datestr = date.strftime(monthfmt + ' %d, %Y') %}
+    {% set dow = date.strftime(dowfmt) %}
+    <div class="row">
+        <div class="col">{{ datestr }}</div>
+    </div>
+    {% if displaytime %}
+    {% set timestr = date.strftime('%H:%M') %}
+    <div class="row">
+        <div class="col">{{ timestr }}</div>
+    </div>
+    {% endif %}
+    <div class="row">
+        <div class="col">{{ dow }}</div>
+    </div>
+{% endmacro %}
+
+<!-- Creates a span with a check in it, for indicating True/False conditions -->
+{% macro checkIndicator(condition, t='bi-check-lg', f='', tcolor='primary', fcolor='') %}
+{% if condition %}
+<span class="{{ t + ' text-' + tcolor }}"></span>
+{% else %}
+<span class="{{ f + ' text-' + fcolor }}"></span>
+{% endif %}
+{% endmacro %}
+
+
+<!-- Create a table of sleep records, given a paginator -->
+{% macro createRecordsTable(records_paginator, has_tags=True) %}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">Record</th>
+            <th></th>
+        </tr>
+    </thead>
+    {% for record in records_paginator %}
+    <tr>
+        <tr>
+            <td>
+                <!-- Date and notes info -->
+                <div class="row">
+                    <div class="col-auto">
+                        <div class="row">
+                            <div class="col-auto">{{ daterange_stringify(record, dateformat='%a, %B %d, %Y') }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-auto">{{ timerange_stringify(record) }}</div>
+                        </div>
+                    </div>
+                    {% if record.notes %}
+                    <div class="col-auto pe-0">
+                        <span class="badge rounded-pill bg-info text-dark opacity-75">Has notes</span>
+                    </div>
+                    {% endif %}
+                </div>
+                <!-- Tags -->
+                {% if has_tags %}
+                <div class="row pb-1">
+                    {% for emotion in record.emotions %}
+                        <div class="col-auto pe-1 py-1">
+                            <a class="defaultlink" href="{{ url_for('sleepdb.emotion', emotion_id=emotion.id) }}">{{ emotion.tag }}</a>
+                        </div>
+                    {% endfor %}
+                    {% for location in record.locations %}
+                        <div class="col-auto pe-1 py-1">
+                            <a class="defaultlink" href="{{ url_for('sleepdb.location', location_id=location.id) }}">{{ location.tag }}</a>
+                        </div>
+                    {% endfor %}
+                    {% for sensation in record.sensations %}
+                        <div class="col-auto pe-1 py-1">
+                            <a class="defaultlink" href="{{ url_for('sleepdb.sensation', sensation_id=sensation.id) }}">{{ sensation.tag }}</a>
+                        </div>
+                    {% endfor %}
+                    {% for interruption in record.interruptions %}
+                        <div class="col-auto pe-1 py-1">
+                            <a class="defaultlink" href="{{ url_for('sleepdb.interruption', interruption_id=interruption.tag_id) }}">{{ interruption.tag.tag }}</a>
+                        </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </td>
+            <td>
+                <!-- View link -->
+                <div class="row">
+                    <div class="col-auto">
+                        <a class="text-decoration-none" href="{{ url_for('sleepdb.record', record_id=record.id) }}">view</a>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </tr>
+    {% endfor %}
+</table>
+<br>
+
+{% endmacro %}
+
+
+
+{% macro recordsTable(paginator, displaytags=False, displayinterruptions=False, displayratings=False) %}
+<div class="row" id="recordstable">
+    <div class="col">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Sessions</th>
+                    {% if displaytags %}
+                    <th class="d-none d-sm-table-cell">Tags</th>
+                    {% endif %}
+                    {% if displayinterruptions %}
+                    <th class="col-1 text-center">Has interruptions</th>
+                    {% endif %}
+                    {% if displayratings %}
+                    <th class="col-1 d-none d-sm-table-cell text-center">Has rating</th>
+                    {% endif %}
+                    <th class="col-1 d-none d-md-table-cell text-center">Is complete</th>
+                    <th class="col-1 text-center text-md-end">Has notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in paginator %}
+                <tr>
+                    <td>
+                        <a class="defaultlink" href="{{ url_for('sleepdb.record', record_id=s.id) }}">
+                            <div class="row">
+                                <div class="col">{{ daterange_stringify(s) }}</div>
+                            </div>
+                            <div class="row">
+                                <div class="col">{{ timerange_stringify(s) }}</div>
+                            </div>
+                            <div class="row">
+                                <div class="col">{{ dowrange_stringify(s) }}</div>
+                            </div>
+                        </a>
+                    </td>
+                    {% if displaytags %}
+                    <td class="d-none d-sm-table-cell">
+                        <div class="row align-items-center">
+                            {% for tt, tobj in {'sensations': s.sensations, 'emotions': s.emotions, 'locations': s.locations}.items() %}
+                            {% set urlstring = 'sleepdb.' + tt %}
+                            {% for t in tobj %}
+                            {% set arg = tt %}
+                            {% set value = t.id if tt in ['sensations', 'emotions', 'locations'] else t.tag.id %}
+                            {% set params = {arg: value} %}
+                            <div class="col-auto">
+                                <p class="defaulttag mb-0">{{ t.tag }}</p>
+                            </div>
+                            {% endfor %}
+                            {% endfor %}
+                        </div>
+                    </td>
+                    {% endif %}
+                    {% if displayinterruptions %}
+                    <td class="text-center">
+                        {{ checkIndicator(s.interruptions) }}
+                    </td>
+                    {% endif %}
+                    {% if displayratings %}
+                    <td class="d-none d-sm-table-cell text-center">
+                        {{ checkIndicator(s.rating) }}
+                    </td>
+                    {% endif %}
+                    <td class="d-none d-md-table-cell text-center">
+                        {{ checkIndicator(s.time_rise and s.time_stop_sleep and s.time_start_sleep and s.time_retire) }}
+                    </td>
+                    <td class="text-center">
+                        {{ checkIndicator(s.notes) }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endmacro %}
+
+<!-- Template for showing a record in the Note page -->
+{% macro createNoteRecordsTable(record) %}
+
+{% if record %}
+<div class="row">
+    <div class="col">
+        {{ daterange_stringify(record) }}
+    </div>
+</div>
+<div class="row">
+    <div class="col">
+        {{ timerange_stringify(record) }}
+    </div>
+</div>
+{% endif %}
+
+{% endmacro %}
+
+<!-- Template for showing a record in the Notes page -->
+{% macro createNotesPageRecord(record) %}
+
+{% if record %}
+<div class="row">
+    <div class="col">
+        {{ daterange_stringify(record) }}
+    </div>
+</div>
+<div class="row">
+    <div class="col">
+        {{ timerange_stringify(record) }}
+    </div>
+</div>
+{% endif %}
+
+{% endmacro %}
+
+
+
+{% macro durationStatCard(statobject, title) %}
+<div class="card h-100">
+    <div class="card-header">
+        <h2 class="text-center">{{ title }}</h2>
+    </div>
+    <div class="row justify-content-between">
+        <div class="col-10 col-sm-6 m-4">
+            <div class="carousel slide" id="carousel-{{ statobject.name }}">
+                <div class="carousel-inner">
+                    <div class="carousel-item active">
+                        <img class="rounded mx-auto d-block img-fluid" src="data:image/png;base64,{{ statobject.hist }}" alt="Plot">
+                    </div>
+                    <div class="carousel-item">
+                        <img class="rounded mx-auto d-block img-fluid" src="data:image/png;base64,{{ statobject.boxplot }}" alt="Plot">
+                    </div>
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#carousel-{{ statobject.name }}" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon"></span>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#carousel-{{ statobject.name }}" data-bs-slide="next">
+                    <span class="carousel-control-next-icon"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>count</th>
+                        <td class="text-end">{{ statobject.count }}</td>
+                    </tr>
+                    <tr>
+                        <th>mean</th>
+                        <td class="text-end">{{ statobject.mean }}</td>
+                    </tr>
+                    <tr>
+                        <th>stdev</th>
+                        <td class="text-end">{{ statobject.std }}</td>
+                    </tr>
+                    <tr>
+                        <th>min</th>
+                        <td class="text-end">{{ statobject.min }}</td>
+                    </tr>
+                    <tr>
+                        <th>1st quartile</th>
+                        <td class="text-end">{{ statobject.qtr1 }}</td>
+                    </tr>
+                    <tr>
+                        <th>median</th>
+                        <td class="text-end">{{ statobject.med }}</td>
+                    </tr>
+                    <tr>
+                        <th>3rd quartile</th>
+                        <td class="text-end">{{ statobject.qtr3 }}</td>
+                    </tr>
+                    <tr>
+                        <th>max</th>
+                        <td class="text-end">{{ statobject.max }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+{% macro durationStatLayout(stats) %}
+
+{% set statobjects = {
+    'Asleep': stats.asleep,
+    'Asleep (with interruptions)': stats.asleep_adjusted,
+    'Total interruptions': stats.interruption_duration,
+    'In bed': stats.in_bed,
+    'Awake in bed': stats.awake
+} %}
+
+<div class="row">
+    <div class="col">
+        <h1>Statistics - {{ stats.long_name }}</h1>
+        <p><i>{{ stats.description }}</i></p>
+    </div>
+</div>
+
+{% for t, s in statobjects.items() %}
+<div class="row py-4">
+    <div class="col">
+        {{ durationStatCard(s, t) }}
+    </div>
+</div>
+{% endfor %}
+ <br>
+{% endmacro %}
+
+
+
+{% macro tagStatTable(statobject) %}
+{% endmacro %}
+
+
+
+{% macro tagStatLayout(t_stats) %}
+
+<div class="row">
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header bg-muted">
+                <h2 class="">Tags</h2>
+            </div>
+            <div class="card-body">
+                <h3>Sensations</h3>
+                <table class="table">
+                    <tr>
+                        <th class="col-1 col-md-2">most common</th>
+                        <td class="text-end align-middle">
+                            <div class="row justify-content-end">
+                                {% set tags = t_stats.sensations.mostcommon.tags %}
+                                {% for tag in tags %}
+                                <div class="col-auto">
+                                    <a class="text-decoration-none" href="{{ url_for('sleepdb.sensation', sensation_id=tag.id) }}">{{ tag.tag }}</a>
+                                </div>
+                                {% endfor %}
+                                <div class="col-auto">
+                                    ({{ t_stats.sensations.mostcommon.count }})
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>least common</th>
+                        <td class="text-end align-middle">
+                            <div class="row justify-content-end">
+                                {% set tags = t_stats.sensations.leastcommon.tags %}
+                                {% for tag in tags %}
+                                <div class="col-auto">
+                                    <a class="text-decoration-none" href="{{ url_for('sleepdb.sensation', sensation_id=tag.id) }}">{{ tag.tag }}</a>
+                                </div>
+                                {% endfor %}
+                                <div class="col-auto">
+                                    ({{ t_stats.sensations.leastcommon.count }})
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="align-middle">tags</th>
+                        <td class="text-end">
+                            <div class="row justify-content-end gx-3 gy-2">
+                                {% for tag in t_stats.sensations.tags %}
+                                <div class="col-auto">
+                                    <a class="text-end text-decoration-none" href="{{ url_for('sleepdb.sensation', sensation_id=tag.id) }}">{{ tag.tag }}</a>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>count</th>
+                        <td class="text-end">{{ t_stats.sensations.totalcount }}</td>
+                    </tr>
+                </table>
+                <br>
+                <h3>Emotions</h3>
+                <table class="table">
+                    <tr>
+                        <th class="col-1 col-md-2">most common</th>
+                        <td class="text-end align-middle">
+                            <div class="row justify-content-end">
+                                {% set tags = t_stats.emotions.mostcommon.tags %}
+                                {% for tag in tags %}
+                                <div class="col-auto">
+                                    <a class="text-decoration-none" href="{{ url_for('sleepdb.emotion', emotion_id=tag.id) }}">{{ tag.tag }}</a>
+                                </div>
+                                {% endfor %}
+                                <div class="col-auto">
+                                    ({{ t_stats.emotions.mostcommon.count }})
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>least common</th>
+                        <td class="text-end align-middle">
+                            <div class="row justify-content-end">
+                                {% set tags = t_stats.emotions.leastcommon.tags %}
+                                {% for tag in tags %}
+                                <div class="col-auto">
+                                    <a class="text-decoration-none" href="{{ url_for('sleepdb.emotion', emotion_id=tag.id) }}">{{ tag.tag }}</a>
+                                </div>
+                                {% endfor %}
+                                <div class="col-auto">
+                                    ({{ t_stats.emotions.leastcommon.count }})
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="align-middle">tags</th>
+                        <td class="text-end">
+                            <div class="row justify-content-end gx-3 gy-2">
+                                {% for tag in t_stats.emotions.tags %}
+                                <div class="col-auto">
+                                    <a class="text-end text-decoration-none" href="{{ url_for('sleepdb.emotion', emotion_id=tag.id) }}">{{ tag.tag }}</a>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>count</th>
+                        <td class="text-end">{{ t_stats.emotions.totalcount }}</td>
+                    </tr>
+                </table>
+                <br>
+                <h3>Locations</h3>
+                <table class="table">
+                    <tr>
+                        <th class="col-1 col-md-2">most common</th>
+                        <td class="text-end align-middle">
+                            <div class="row justify-content-end">
+                                {% set tags = t_stats.locations.mostcommon.tags %}
+                                {% for tag in tags %}
+                                <div class="col-auto">
+                                    <a class="text-decoration-none" href="{{ url_for('sleepdb.location', location_id=tag.id) }}">{{ tag.tag }}</a>
+                                </div>
+                                {% endfor %}
+                                <div class="col-auto">
+                                    ({{ t_stats.locations.mostcommon.count }})
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>least common</th>
+                        <td class="text-end align-middle">
+                            <div class="row justify-content-end">
+                                {% set tags = t_stats.locations.leastcommon.tags %}
+                                {% for tag in tags %}
+                                <div class="col-auto">
+                                    <a class="text-decoration-none" href="{{ url_for('sleepdb.location', location_id=tag.id) }}">{{ tag.tag }}</a>
+                                </div>
+                                {% endfor %}
+                                <div class="col-auto">
+                                    ({{ t_stats.locations.leastcommon.count }})
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="align-middle">tags</th>
+                        <td class="text-end">
+                            <div class="row justify-content-end gx-3 gy-2">
+                                {% for tag in t_stats.locations.tags %}
+                                <div class="col-auto">
+                                    <a class="text-end text-decoration-none" href="{{ url_for('sleepdb.location', location_id=tag.id) }}">{{ tag.tag }}</a>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>count</th>
+                        <td class="text-end">{{ t_stats.locations.totalcount }}</td>
+                    </tr>
+                </table>
+                <br>
+                <h3>Interruptions</h3>
+                <table class="table">
+                    <tr>
+                        <th class="col-1 col-md-2">most common</th>
+                        <td class="text-end align-middle">
+                            <div class="row justify-content-end">
+                                {% set tags = t_stats.interruptions.mostcommon.tags %}
+                                {% for tag in tags %}
+                                <div class="col-auto">
+                                    <a class="text-decoration-none" href="{{ url_for('sleepdb.interruption', interruption_id=tag.id) }}">{{ tag.tag }}</a>
+                                </div>
+                                {% endfor %}
+                                <div class="col-auto">
+                                    ({{ t_stats.interruptions.mostcommon.count }})
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>least common</th>
+                        <td class="text-end align-middle">
+                            <div class="row justify-content-end">
+                                {% set tags = t_stats.interruptions.leastcommon.tags %}
+                                {% for tag in tags %}
+                                <div class="col-auto">
+                                    <a class="text-decoration-none" href="{{ url_for('sleepdb.interruption', interruption_id=tag.id) }}">{{ tag.tag }}</a>
+                                </div>
+                                {% endfor %}
+                                <div class="col-auto">
+                                    ({{ t_stats.interruptions.leastcommon.count }})
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="align-middle">tags</th>
+                        <td class="text-end">
+                            <div class="row justify-content-end gx-3 gy-2">
+                                {% for tag in t_stats.interruptions.tags %}
+                                <div class="col-auto">
+                                    <a class="text-end text-decoration-none" href="{{ url_for('sleepdb.interruption', interruption_id=tag.id) }}">{{ tag.tag }}</a>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>count</th>
+                        <td class="text-end">{{ t_stats.interruptions.totalcount }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+
+
+{% macro notesTable(paginator, displaysession=True) %}
+<div class="row" id="notestable">
+    <div class="col">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th class="col-2">Added</th>
+                    <th class="text-end text-sm-start">Contents</th>
+                    <th class="col-1 d-none d-sm-table-cell text-center">Important</th>
+                    {% if displaysession %}
+                    <th class="d-none d-sm-table-cell text-end">Session</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for n in paginator %}
+                <tr>
+                    <td>
+                        <a class="defaultlink" href="{{ url_for('sleepdb.note', note_id=n.id) }}">
+                            <span class="d-none d-sm-inline">{{ dateparts_stringify(n.date_added, displaytime=True) }}</span>
+                            <span class="d-inline d-sm-none">{{ dateparts_stringify(n.date_added, monthfmt='%b', dowfmt='%a', displaytime=True) }}</span>
+                        </a>
+                    </td>
+                    <td class="text-end text-sm-start"><p class="mb-0">{{ (n.note|markdown)[3:-4] }}</p></td>
+                    <td class="col-1 d-none d-sm-table-cell text-center">
+                        <span class="{{ 'bi-check-lg text-primary' if n.important else '' }}"></span>
+                    </td>
+                    {% if displaysession %}
+                    <td class="d-none d-sm-table-cell text-end align-middle">
+                        {% if n.record %}
+                        <a class="defaultlink" href="{{ url_for('sleepdb.record', record_id=n.record.id) }}">
+                            <div class="row justify-content-end">
+                                <div class="col-auto">{{ daterange_stringify(n.record) }}</div>
+                            </div>
+                            <div class="row justify-content-end">
+                                <div class="col-auto">{{ timerange_stringify(n.record) }}</div>
+                            </div>
+                            <div class="row justify-content-end">
+                                <div class="col-auto">{{ dowrange_stringify(n.record) }}</div>
+                            </div>
+                        </a>
+                        {% else %}
+                        <div class="row justify-content-end">
+                            <div class="col-auto">No record</div>
+                        </div>
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endmacro %}
+
+
+
+{% macro tagsLayout(paginator, tagtype) %}
+{% set urlstring = 'sleepdb.' + tagtype %}
+{% set arg = tagtype + '_id' %}
+<div class="row">
+    <div class="col">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th class="text-end">Usage counts</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in paginator %}
+                <tr>
+                    <td>
+                        {% set params={arg: t.id} %}
+                        <a class="defaultlink" href="{{ url_for(urlstring, **params) }}">{{ t.tag }}</a>
+                    </td>
+                    <td class="text-end">{{ t.interruptions|length if tagtype == 'interruption' else t.records|length }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endmacro %}
+
+
+
+{% macro tagRow(tagtype, tags, align='start', alignempty='center') %}
+{% if tags %}
+<div class="row justify-content-{{ align }} g-3">
+    {% set urlstring = 'sleepdb.' + tagtype %}
+    {% for tag in tags|sort(attribute='tag') %}
+    {% set param = {tagtype + '_id': tag.id} %}
+    <div class="col-auto">
+        <a class="defaultlink" href="{{ url_for(urlstring, **param) }}">{{ tag.tag }}</a>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="row justify-content-{{ alignempty }}">
+    <div class="col-auto"><p class="defaulttag my-0">None</p></div>
+</div>
+{% endif %}
+{% endmacro %}
+
+
+
+{% macro interruptionsTagRow(record, align='end', alignempty='center') %}
+{% set ui = namespace(l=[]) %}
+{% for i in record.interruptions %}
+{% set ui.l = ui.l + i.tags %}
+{% endfor %}
+{% set tags = ui.l|unique %}
+{{ tagRow('interruption', tags, align, alignempty) }}
+{% endmacro %}
+
+
+
+{% macro sessionCard(record) %}
+<div class="card h-100">
+    <div class="card-header">
+        <h2>Session details</h2>
+    </div>
+    <div class="card-body">
+        {% if record %}
+        {% set r = record %}
+        <table class="table">
+            <tr>
+                <th class="align-middle">Date</th>
+                <td class="text-end">
+                    <a class="defaultlink" href="{{ url_for('sleepdb.record', record_id=record.id) }}" target="_blank">
+                        <div class="row justify-content-end">
+                            <div class="col-auto">{{ daterange_stringify(r) }}</div>
+                        </div>
+                        <div class="row justify-content-end">
+                            <div class="col-auto">{{ timerange_stringify(r) }}</div>
+                        </div>
+                        <div class="row justify-content-end">
+                            <div class="col-auto">{{ dowrange_stringify(r) }}</div>
+                        </div>
+                    </a>
+                </td>
+            </tr>
+            {% for tt, tobj in {'sensation': r.sensations, 'emotion': r.emotions, 'location': r.locations }.items() %}
+            <tr>
+                <th class="align-middle">{{ tt|capitalize }}s</th>
+                <td class="text-end">{{ tagRow(tt, tobj, align='end', alignempty='end') }}</td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <th class="align-middle">Interruptions</th>
+                <td class="text-end">{{ interruptionsTagRow(r) }}</td>
+            </tr>
+        </table>
+        {% else %}
+        <div class="row align-self-stretch">
+            <div class="col">
+                <p class="text-center">No record</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+
+
+{% macro sleepRatingInfoTable() %}
+<div class="row row-cols-1 g-2 align-items-center">
+    <div class="col">0 - unrated or unrateable</div>
+    <div class="col">1 - terrible</div>
+    <div class="col">2 - okay</div>
+    <div class="col">3 - acceptable</div>
+    <div class="col">4 - excellent</div>
+</div>
+{% endmacro %}
+
+
+
+{% macro popoverScript() %}
+<script>
+    const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
+    const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl))
+    const popover = new bootstrap.Popover('.popover-dismiss', {
+        trigger: 'focus'
+    })
+</script>
+{% endmacro %}

@@ -1,0 +1,76 @@
+{% extends 'gamingdb/index.html' %}
+{% from 'gamingdb/macros.html' import stringify_datespan, stringify_timespan, noteSessionDataCard, noteSessionCard, noteGameCard %}
+
+{% block subtitle %}Add Note{% endblock %}
+
+{% block subcontent %}
+
+<div class="row justify-content-between align-items-center">
+    <div class="col-auto">
+        <h1>{{ 'Add note' if not note else 'Edit note' }}</h1>
+    </div>
+    <div class="col-auto">
+        {% if note %}
+        <form method="POST" action="{{ url_for('gamingdb.delete_note', note_id=note.id) }}">
+            <input type="submit" class="btn btn-outline-danger btn-sm" value="Delete" onclick="return confirm('Are you sure you want to delete this note?')">
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<script type="module">
+    import Tags from "https://cdn.jsdelivr.net/gh/lekoala/bootstrap5-tags@master/tags.js";
+    Tags.init("select", {separator: '|,|', addOnBlur:'true', allowNew: 'true', allowClear: 'false'});
+</script>
+
+<br>
+
+<form method="POST" action="">
+    {{ form.csrf_token }}
+    <div class="row row-cols-1 row-cols-sm-2 g-4">
+
+        <div class="col">
+            <div class="row row-cols-1 g-2">
+                <!-- Game and note fields -->
+                {% if not record %}
+                <div class="col">{{ form.game(class='form-control') }}</div>
+                {% endif %}
+                <div class="col">{{ form.note(class='form-control', rows=10, placeholder='Add a note...', style='height:100%;') }}</div>
+
+                <!-- "Important" check -->
+                <div class="col">
+                    <div class="row row-cols-2 g-2">
+                        <div class="col-auto">{{ form.important(class='form-check-input') }}</div>
+                        <div class="col-auto">{{ form.important.label(class='form-check-label') }}</div>
+                    </div>
+                </div>
+    
+                <!-- Submit/cancel buttons -->
+                <div class="col">
+                    <div class="row row-cols-2 g-2">
+                        <div class="col-auto">{{ form.submit(class="btn btn-primary") }}</div>
+                        <div class="col-auto">
+                            {% if record %}
+                            <a type="button" class="btn btn-primary" href="{{ url_for('gamingdb.record', record_id=record.id) }}">Cancel</a>
+                            {% else %}
+                            <a type="button" class="btn btn-primary" href="javascript:history.back()">Cancel</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Session and game info -->
+        <div class="col">
+            <div class="row row-cols-1 g-4">
+                <div class="col">{{ noteSessionCard(record) }}</div>
+                <div class="col">{{ noteGameCard(game) }}</div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<br>
+
+{% endblock %}

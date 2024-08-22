@@ -1,0 +1,60 @@
+{% extends 'gamingdb/index.html' %}
+{% from 'gamingdb/macros.html' import dateGrid, noteSessionCard, noteGameCard %}
+
+{% block subtitle %}Note - {{ note.date_added.strftime('%a, %b %d, %Y') }}{% endblock %}
+
+{% macro insertCheckmark() %}
+{% if note.important %}
+<span class="bi-check-square text-danger"></span>
+{% else %}
+<span class="bi-x-square text-secondary"></span>
+{% endif %}
+{% endmacro %}
+
+{% block subcontent %}
+
+<div class="row justify-content-between align-items-center">
+    <div class="col-auto">
+        <h1>Note</h1>
+    </div>
+    <div class="col-auto">
+        <a type="button" class="btn btn-primary btn-sm" href="{{ url_for('gamingdb.update_note', note_id=note.id) }}">edit</a>
+    </div>
+</div>
+<br>
+
+<div class="row row-cols-1 row-cols-sm-2 g-4">
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header"><h2>Content</h2></div>
+            <div class="card-body">
+                {{ note.note|markdown }}
+            </div>
+        </div>        
+    </div>
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header"><h2>Details</h2></div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>Date added (UTC)</th>
+                        <td class="text-end">{{ dateGrid(note.date_added, multiline=False) }}</td>
+                    </tr>
+                    <tr>
+                        <th>Important</th>
+                        <td class="text-end">{{ checkIcon(note.important) }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>        
+    </div>
+    <div class="col">
+        {{ noteSessionCard(note.record) }}
+    </div>
+    <div class="col">
+        {{ noteGameCard(note.game) }}
+    </div>
+</div>
+
+{% endblock %}

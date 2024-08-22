@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% from 'journaldb/macros.html' import entryCard %}
+
+{% block title %}JournalDB - {% block subtitle %}Dashboard{% endblock %}{% endblock %}
+
+{% set links = {
+    'Dashboard': url_for('journaldb.index'),
+    'Entries': url_for('journaldb.records'),
+    'Tags': {
+        'Subjects': url_for('journaldb.tags', tagtype='subjects'),
+        'Descriptors': url_for('journaldb.tags', tagtype='descriptors'),
+        'Emotions': url_for('journaldb.tags', tagtype='emotions'),
+    }
+} %}
+
+{% set buttonlinks = {
+    'Add entry': url_for('journaldb.create_record')
+} %}
+
+{% block content %}
+
+{{ navDiv(links, buttonlinks) }}
+
+{% block subcontent %}
+
+<div class="row">
+    <div class="col">
+        <h1>Dashboard</h1>
+    </div>
+</div>
+<br>
+
+<div class="row row-cols-1 g-4">
+    <div class="col">
+        {{ entryCard(randomrecord, title='Selected entry') }}
+    </div>
+    <div class="col">
+        <div class="row row-cols-1 row-cols-md-2 g-4">            
+            <div class="col">
+                <div class="row row-cols-1 g-4">
+                    {% for i, d in [
+                        ('entries', recordstats), 
+                        ('unfinished', unfinishedstats), 
+                        ('watched', watchedstats),
+                    ] %}
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-header"><h2>{{ i|capitalize }}</h2></div>
+                            <div class="card-body">
+                                <table class="table">
+                                    <tr>
+                                        <th>Count</th>
+                                        <td class="text-end">
+                                            <div class="row justify-content-end align-items-center">
+                                                <div class="col">{{ d.count }}</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Latest</th>
+                                        <td class="text-end">
+                                            <div class="row justify-content-end align-items-center">
+                                                <div class="col">
+                                                    {% if d.latest %}
+                                                    <a class="defaultlink" href="{{ url_for('journaldb.record', record_id=d.latest.id) }}">
+                                                        {{ dateGrid(d.latest.record_date, multiline=False) }}
+                                                    </a>
+                                                    {% else %}
+                                                    None
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="card-footer">
+                                <div class="row justify-content-end">
+                                    <div class="col-auto">
+                                        {{ timeDataModal(d.timedata, name=i, title='%s time data' % (i|capitalize)) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>            
+            <div class="col">
+                <div class="row row-cols-1 g-4">
+                    {% for i in 'subjects', 'descriptors', 'emotions' %}
+                    {% set stats = tagstats[i] %}
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-header"><h2>{{ i|capitalize }}</h2></div>
+                            <div class="card-body">
+                                <table class="table">
+                                    <tr>
+                                        <th>Count</th>
+                                        <td class="text-end">{{ tagstats.counts[i] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Most common</th>
+                                        <td class="text-end">
+                                            <div class="row g-1 justify-content-end align-items-center">
+                                                <div class="col-auto">
+                                                    {{ tagsRow(endpoint='journaldb.tag', arg=i, tags=stats.mostcommon.tags, align='center', alignempty='center', legacy=False) }}
+                                                </div>
+                                                <div class="col-auto">
+                                                    {{ tagsCountModal(stats['all'], endpoint='journaldb.tag', tagtype=i, buttonlabel=None, title=None, tooltip=None, legacy=False) }}
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="card-footer">
+                                <div class="row justify-content-end">
+                                    <div class="col-auto">
+                                        {% set n = namespace(vs=[]) %}
+                                        {% for v in tagstats.timedata[i] %}
+                                        {% set n.vs = n.vs + [tagsRow(endpoint='journaldb.tag', arg=i, tags=v, align='center', alignempty='center', legacy=False)] %}
+                                        {% endfor %}
+                                        {{ timeDataModal({'most common': n.vs}, buttontext='See time data', name=i + 'Time', title='') }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>        
+        </div>
+    </div>
+</div>
+<br>
+
+{{ popoverScript() }}
+
+{% endblock %}
+
+{% endblock %}
+
+{% macro tagsdata_to_rows(index) %}
+{% set td = tagstats.timedata[index] %}
+{% set n = namespace(vs=[]) %}
+{% for v in td %}
+{% set n.vs = n.vs + [tagsRow(endpoint='journaldb.tag', arg=index, tags=v, align='center', alignempty='center', legacy=False)] %}
+{% endfor %}
+{{ n.vs }}
+{% endmacro %}

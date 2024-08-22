@@ -1,0 +1,30 @@
+{% extends 'restaurantdb/index.html' %}
+
+{% block title %}Restaurant Tags{% endblock %}
+
+{% block subcontent %}
+
+<div class="row align-items-center justify-content-between">
+    <div class="col-auto"><h1>Tags</h1></div>
+</div>
+<br>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Tag</th>
+            <th class="col-1 text-center">Usage</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for t in paginator %}
+        <tr>
+            <td><a class="defaultlink" href="{{ url_for('restaurantdb.tag', tag_id=t.id) }}">{{ t.tag }}</a></td>
+            <td class="text-center">{{ t.records|length }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{{ basicpaginator('restaurant', 'tags', paginator) }}
+
+{% endblock %}

@@ -1,0 +1,239 @@
+{% extends 'dreamdb/index.html' %}
+{% from 'dreamdb/macros.html' import dreamDateGrid %}
+
+{% block subtitle %}Dreams{% endblock %}
+
+{% block subcontent %}
+
+{{ bootstrapTagsScript(allownew='false') }}
+
+<div class="row justify-content-between align-items-center">
+    <div class="col">
+        <h1>Dreams</h1>
+    </div>
+    <div class="col-auto">
+        <form action="" method="post">
+            {{ form.csrf_token }}
+            {% if (content, timeofday, sleeptype, subjects, descriptors, emotions)|select|first %}
+            <div class="btn-group">
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalId">Filter</button>
+                <button type="button" class="btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="visually-hidden">Toggle dropdown</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="{{ url_for('dreamdb.records', remove='all') }}">Clear all filters</a></li>
+                </ul>
+            </div>
+            {% else %}
+            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalId">Filter</button>
+            {% endif %}
+            <div
+                class="modal fade"
+                id="modalId"
+                data-bs-backdrop="static"
+                data-bs-keyboard="false"
+                
+                role="dialog"
+                aria-labelledby="modalTitleId"
+                aria-hidden="true"
+            >
+                <div
+                    class="modal-dialog modal-dialog-centered modal-md"
+                    role="document"
+                >
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalTitleId">
+                                Filter dream records
+                            </h5>
+                            <button
+                                type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Close"
+                            ></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row row-cols-1 g-4">
+                                <div class="col">
+                                    {{ form.content(class='form-control', autocomplete='off', placeholder='Search text of dreams...') }}
+                                </div>
+                                <div class="col">
+                                    {{ form.time_of_day(class='form-select', placeholder='Time of day...') }}
+                                </div>
+                                <div class="col">
+                                    {{ form.sleep_type(class='form-select', autocomplete='off', placeholder='Sleep type...') }}
+                                </div>
+                                <div class="col">
+                                    {{ form.subjects(class='form-select', autocomplete='off', placeholder='Subjects...') }}
+                                </div>
+                                <div class="col">
+                                    {{ form.descriptors(class='form-select', autocomplete='off', placeholder='Descriptors...') }}
+                                </div>
+                                <div class="col">
+                                    {{ form.emotions(class='form-select', autocomplete='off', placeholder='Emotions...') }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <div class="row g-2">
+                                {% if (content, timeofday, sleeptype, subjects, descriptors, emotions)|select|first %}
+                                <div class="col-auto">
+                                    <a class="btn btn-secondary" href="{{ url_for('dreamdb.records', remove='all') }}">Clear all filters</a>
+                                </div>
+                                {% endif %}
+                                <div class="col-auto">{{ form.submit(class='btn btn-primary') }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% if (content, timeofday, sleeptype, subjects, descriptors, emotions)|select|first %}
+<div class="row g-2 align-items-center">
+    <div class="col-auto">Filtered by:</div>
+
+
+    {# Tag filters #}
+    {% for i, l in [('subject', subjects), ('descriptor', descriptors), ('emotion', emotions)] %}
+    {% for t in l %}
+    <div class="col-auto">
+        <a href="{{ url_for('dreamdb.records', remove=i, tag=t) }}"><span class="badge pill text-bg-primary">{{ i }}: {{ t }} <span class="bi-x"></span></span></a>
+    </div>
+    {% endfor %}
+    {% endfor %}
+    
+    {# Sleep type filter #}
+    {% if sleeptype %}
+    <div class="col-auto">
+        <a href="{{ url_for('dreamdb.records', remove='sleeptype') }}"><span class="badge pill text-bg-primary">{{ sleeptype }} <span class="bi-x"></span></span></a>
+    </div>
+    {% endif %}
+    
+    {# Time of day filter #}
+    {% if timeofday %}
+    <div class="col-auto">
+        <a href="{{ url_for('dreamdb.records', remove='timeofday') }}"><span class="badge pill text-bg-primary">{{ timeofday }} <span class="bi-x"></span></span></a>
+    </div>
+    {% endif %}
+    
+    {# Content filter #}
+    {% if content %}
+    <div class="col-auto">
+        <a href="{{ url_for('dreamdb.records', remove='content') }}"><span class="badge pill text-bg-primary">content: "{{ content }}" <span class="bi-x"></span></span></a>
+    </div>
+    {% endif %}
+
+</div>
+{% endif %}
+<br>
+
+<table class="table align-top">
+    <thead>
+        <tr>
+            <th class="d-none d-md-table-cell"></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in paginator %}
+        <tr>
+            <td class="align-top d-none d-md-table-cell col-3">
+                <div class="row row-cols-1 g-3">
+                    <div class="col">
+                        <a class="fw-bold defaultlink" href="{{ url_for('dreamdb.record', record_id=r.id) }}">{{ dreamDateGrid(r, monthfmt='%B', dowfmt='%A') }}</a>
+                    </div>
+                    <div class="col">
+                        <div class="row justify-content-between g-2">
+                            <div class="col">
+                                <p class="fw-bold mb-0 text-warning">
+                                    {{ checkIcon(r.notes, icontrue='stickies', colortrue='body', text='%s notes' % (' Has' if r.notes else 'No'), iconfalse='') }}
+                                </p>
+                            </div>
+                            <div class="col-auto"></div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <p class="fw-bold mb-0">Tags</p>
+                        <div class="row row-cols-2 g-1">
+                            {% for i, l in [('subjects', subjects), ('descriptors', descriptors), ('emotions', emotions)] %}
+                            {% for t in r[i] %}
+                            <div class="col"><p class="{{ 'text-warning-emphasis' if t.tag in l else 'defaulttag'}} mb-0">{{ t.tag }}</p></div>
+                            {% endfor %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div class="row row-cols-1 g-3">
+                    <div class="col d-block d-md-none">
+                        <div class="row align-items-top justify-content-between">
+                            <div class="col">
+                                <a class="fw-bold defaultlink" href="{{ url_for('dreamdb.record', record_id=r.id) }}">
+                                    <div class="row row-cols-1">
+                                        <div class="col-auto">{{ r.record_date.strftime('%B %d, %Y (%a)') }}</div>
+                                        <div class="col">{{ r.time_of_day }}</div>
+                                        <div class="col">{{ r.sleep_type }}</div>
+                                    </div>
+                                </a>
+                            </div>
+                            {% if r.notes %}
+                            <div class="col-auto"><span class="text-body bi-stickies"></span></div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% set c = r.record %}
+                    {% if content %}
+                    {% set cns = namespace(c=r.record) %}
+                    {% for cv in [content|upper, content|capitalize, content|lower] %}
+                    {% set sc = cns.c.split(cv) %}
+                    {% set cns.c = sc|join('<span class="text-warning-emphasis">%s</span>' % cv) %}
+                    {% endfor %}
+                    {% set c = cns.c %}
+                    {% endif %}
+                    <div class="col">{{ c|markdown }}</div>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{{ basicpaginator('dream', 'records', paginator) }}
+
+{# set 'disabled' keywords for navigation buttons, as necessary #}
+{# {% set prev_disabled = '' if paginator.has_prev else 'disabled' %}
+{% set next_disabled = '' if paginator.has_next else 'disabled' %}
+
+<div class="row align-items-top">
+    <div class="col">
+        <nav aria-label="...">
+            <ul class="pagination">
+                {% for a, da, h, b in [
+                    ({'page': 1}, prev_disabled, 'First', 'chevron-bar-left'),
+                    ({'page': paginator.prev_num}, prev_disabled, 'Prev', 'chevron-left'),
+                    ({'page': paginator.next_num}, next_disabled, 'Next', 'chevron-right'),
+                    ({'page': paginator.pages}, next_disabled, 'Last', 'chevron-bar-right'),
+                ] %}
+                {% set params = a|urlencode %}
+                <li class="page-item">
+                    <a class="page-link {{ da }}" href="{{ url_for('dreamdb.records', **a) }}">
+                        <span class="d-none d-sm-inline">{{ h }}</span>
+                        <span class="d-inline d-sm-none bi-{{ b }}"></span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </nav>
+    </div>
+    <div class="col-auto">
+        {% if paginator.pages %}
+        {{ paginator.page }} of {{ paginator.pages }}
+        {% endif %}
+    </div>
+</div> #}
+<br>
+
+{% endblock %}

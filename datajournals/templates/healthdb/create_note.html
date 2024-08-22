@@ -1,0 +1,13 @@
+{% extends 'healthdb/index.html' %}
+
+{% block subtitle %}Add Note{% endblock %}
+
+{% block subcontent %}
+
+{{ createnotelayout(
+    databasename='health',
+    form=form,
+    record=record
+) }}
+
+{% endblock %}

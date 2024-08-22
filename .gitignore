@@ -1,0 +1,17 @@
+/.venv
+/.idea
+/app_dev.db
+/.env
+/datajournals/journaldb/attachments/*
+/datajournals/tests/attachments/*
+/instance/
+/data_journals.db
+/datajournals/templates/dreamdb/descriptor copy.html
+/datajournals/templates/dreamdb/descriptors copy.html
+/app_dev.db-journal
+/datajournals/app_config/config.json
+/logs/*
+/dist
+/datajournals.egg-info
+/.ipynb_checkpoints/
+*.ipynb

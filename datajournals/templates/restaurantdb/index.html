@@ -1,0 +1,540 @@
+{% extends 'base.html' %}
+{% from 'restaurantdb/macros.html' import simpleStatsGrid, tagRow, dateGrid %}
+
+{% block title %}Restaurants Dashboard{% endblock %}
+
+{% macro recordRow(records, align='end', alignempty='end') %}
+{% if records %}
+<div class="row justify-content-{{ align }} g-3">
+    {% for r in records|sort(attribute='name') %}
+    {% set param = {'record_id': r.id} %}
+    <div class="col-auto">
+        <a class="defaultlink" href="{{ url_for('restaurantdb.record', **param) }}">{{ r.name }}</a>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="row justify-content-{{ alignempty }}">
+    <div class="col-auto"><p class="defaulttag my-0">None</p></div>
+</div>
+{% endif %}
+{% endmacro %}
+
+{% macro recordsPopoverContent() %}
+<div class="row row-cols-3">
+    {% for r in restaurantstats.all %}
+    <div class="col-7">
+        <a class="defaultlink" href="{{ url_for('restaurantdb.record', record_id=r[0].id) }}">{{ r[0].name }}</a>
+    </div>
+    <div class="col-2">{{ r[1] }}</div>
+    <div class="col-3">({{ r[2] }})</div>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+{% macro meanPopoverContent(s) %}
+<div class="row row-cols-2 justify-content-between">
+    {% for i in ['mean', 'std'] %}
+    <div class="col">{{ i }}</div>
+    <div class="col">{{ s[i] }}</div>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+{% macro medianPopoverContent(s) %}
+<div class="row row-cols-2 justify-content-between">
+    {% for i in ['min', 'qtr1', 'med', 'qtr3', 'max'] %}
+    <div class="col">{{ i }}</div>
+    <div class="col">{{ s[i] }}</div>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+{% macro weekdaysPopoverContent() %}
+<div class="row row-cols-3">
+    {% for r in visitstats.all %}
+    <div class="col-7">{{ r[0] }}</div>
+    <div class="col-2">{{ r[1] }}</div>
+    <div class="col-3">({{ r[2] }})</div>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+{% block content %}
+
+{% set links = {
+    'Dashboard': url_for('restaurantdb.index'),
+    'Restaurants': url_for('restaurantdb.records'),
+    'Visits': url_for('restaurantdb.visits'),
+    'Tags': url_for('restaurantdb.tags'),
+    'Notes': url_for('restaurantdb.notes'),
+} %}
+
+{% set buttons = {
+    'Add restaurant': url_for('restaurantdb.create_record'),
+    'Add visit': url_for('restaurantdb.create_visit'),
+    'Add note': url_for('restaurantdb.create_note'),
+} %}
+
+{{ navDiv(
+    navlinks=links,
+    buttonlinks=buttons
+) }}
+
+{% block subcontent %}
+<div class="row justify-content-between">
+    <div class="col-auto">
+        <h1>Dashboard</h1>
+    </div>
+</div>
+<br>
+
+<div class="row row-cols-1 row-cols-sm-2 g-4">
+
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header"><h2>Restaurants</h2></div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>count</th>
+                        <td class="text-end">{{ restaurantstats.count }}</td>
+                    </tr>
+                    <tr>
+                        <th>most visited</th>
+                        <td class="text-end">
+                            <div class="row justify-content-end align-items-center g-0">
+                                <div class="col-auto">{{ recordRow(restaurantstats.mostcommon.tags) }}</div>
+                                <div class="col-auto">
+                                    {{ dataPopover(recordsPopoverContent(), title='All restaurants') }}
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="card-footer">
+                <div class="row justify-content-end">
+                    <div class="col-auto">
+                        <div
+                            class="modal fade"
+                            id="restaurantModal"
+                            tabindex="-1"
+                            data-bs-backdrop="static"
+                            data-bs-keyboard="false"
+                            
+                            role="dialog"
+                            aria-labelledby="restaurantModalTitle"
+                            aria-hidden="true"
+                        >
+                            <div
+                                class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg"
+                                role="document"
+                            >
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="restaurantModalTitle">
+                                            Most visited restaurants for the last...
+                                        </h5>
+                                        <button
+                                            type="button"
+                                            class="btn-close"
+                                            data-bs-dismiss="modal"
+                                            aria-label="Close"
+                                        ></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    {% for h in ['', '7 days', '30 days', '180 days', 'All time'] %}
+                                                    <th class="text-center">{{ h }}</th>
+                                                    {% endfor %}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <th>restaurant(s)</th>
+                                                    {% for di in ['week', 'month', 'halfyear', 'all'] %}
+                                                    <td class="text-center">{{ recordRow(restaurantstats.timedata[di]['tags'], align='center', alignempty='center') }}</td>
+                                                    {% endfor %}
+                                                </tr>
+                                                {% for h, si in [
+                                                    ('count', 'count'),
+                                                    ('proportion', 'proportion'),
+                                                ] %}
+                                                <tr>
+                                                    <th>{{ h }}</th>
+                                                    {% for di in ['week', 'month', 'halfyear', 'all'] %}
+                                                    <td class="text-center">{{ restaurantstats.timedata[di][si] }}</td>
+                                                    {% endfor %}
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <a type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#restaurantModal">See time data</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header"><h2>Visits</h2></div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>latest</th>
+                        <td class="text-end">
+                            <a class="defaultlink" href="{{ url_for('restaurantdb.visit', visit_id=visitstats.latest.id) }}">
+                                {{ dateGrid(visitstats.latest.date, multiline=False) }}
+                            </a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>most common day to eat out</th>
+                        <td class="text-end">
+                            <div class="row g-0 align-items-center justify-content-end">
+                                <div class="col-auto">
+                                    <div class="row g-1 justify-content-end">
+                                        {% for d in visitstats.mostcommon.days %}
+                                        <div class="col-auto">{{ d|capitalize }}</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="col-auto">{{ dataPopover(weekdaysPopoverContent(), title='All days counts', tooltip='All days counts') }}</div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="card-footer">
+                <div class="row justify-content-end">
+                    <div class="col-auto">
+                        <div
+                            class="modal fade"
+                            id="visitModal"
+                            tabindex="-1"
+                            data-bs-backdrop="static"
+                            data-bs-keyboard="false"
+                            
+                            role="dialog"
+                            aria-labelledby="visitModalTitle"
+                            aria-hidden="true"
+                        >
+                            <div
+                                class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg"
+                                role="document"
+                            >
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="visitModalTitle">
+                                            Most common days for the last...
+                                        </h5>
+                                        <button
+                                            type="button"
+                                            class="btn-close"
+                                            data-bs-dismiss="modal"
+                                            aria-label="Close"
+                                        ></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    {% for h in ['', '7 days', '30 days', '180 days', 'All time'] %}
+                                                    <th class="text-center">{{ h }}</th>
+                                                    {% endfor %}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <th>day(s)</th>
+                                                    {% for di in ['week', 'month', 'halfyear', 'all'] %}
+                                                    <td class="text-center">
+                                                        <div class="row g-1 justify-content-center">
+                                                            {% for w in visitstats.timedata[di]['days'] %}
+                                                            <div class="col-auto">{{ w|capitalize }}</div>
+                                                            {% endfor %}
+                                                        </div>
+                                                    </td>
+                                                    {% endfor %}
+                                                </tr>
+                                                {% for h, si in [
+                                                    ('count', 'count'),
+                                                    ('proportion', 'proportion'),
+                                                ] %}
+                                                <tr>
+                                                    <th>{{ h }}</th>
+                                                    {% for di in ['week', 'month', 'halfyear', 'all'] %}
+                                                    <td class="text-center">{{ visitstats.timedata[di][si] }}</td>
+                                                    {% endfor %}
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <a type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#visitModal">See time data</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header"><h2>Price</h2></div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>count</th>
+                        <td class="text-end">{{ ratingstats.price.count }}</td>
+                    </tr>
+                    <tr>
+                        <th>mean</th>
+                        <td class="text-end">
+                            <div class="row g-0 align-items-center justify-content-end">
+                                <div class="col-auto">{{ ratingstats.price.mean }}</div>
+                                <div class="col-auto">{{ dataPopover(meanPopoverContent(ratingstats.price), title='Mean stats') }}</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>median</th>
+                        <td class="text-end">
+                            <div class="row g-0 align-items-center justify-content-end">
+                                <div class="col-auto">{{ ratingstats.price.med }}</div>
+                                <div class="col-auto">{{ dataPopover(medianPopoverContent(ratingstats.price), title='Quartile stats') }}</div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="card-footer">
+                <div class="row justify-content-end">
+                    <div class="col-auto">
+                        <div
+                            class="modal fade"
+                            id="priceModal"
+                            tabindex="-1"
+                            data-bs-backdrop="static"
+                            data-bs-keyboard="false"
+                            
+                            role="dialog"
+                            aria-labelledby="priceModalTitle"
+                            aria-hidden="true"
+                        >
+                            <div
+                                class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg"
+                                role="document"
+                            >
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="priceModalTitle">
+                                            Price rating stats for last...
+                                        </h5>
+                                        <button
+                                            type="button"
+                                            class="btn-close"
+                                            data-bs-dismiss="modal"
+                                            aria-label="Close"
+                                        ></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    {% for h in ['', '7 days', '30 days', '180 days', 'All time'] %}
+                                                    <th class="text-center">{{ h }}</th>
+                                                    {% endfor %}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for si, h in [
+                                                    ('count', 'count'),
+                                                    ('mean', 'mean'),
+                                                    ('std', 'std. deviation'),
+                                                    ('min', 'min'),
+                                                    ('qtr1', '1st quartile'),
+                                                    ('med', 'median'),
+                                                    ('qtr3', '3rd quartile'),
+                                                    ('max', 'max'),
+                                                ] %}
+                                                <tr>
+                                                    <th>{{ h }}</th>
+                                                    {% for di in ['week', 'month', 'halfyear', 'all'] %}
+                                                    <td class="text-center">{{ ratingstats.timedata.price[di][si] }}</td>
+                                                    {% endfor %}
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <a type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#priceModal">See time data</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header"><h2>Satisfaction</h2></div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>count</th>
+                        <td class="text-end">{{ ratingstats.satisfaction.count }}</td>
+                    </tr>
+                    <tr>
+                        <th>mean</th>
+                        <td class="text-end">
+                            <div class="row g-0 align-items-center justify-content-end">
+                                <div class="col-auto">{{ ratingstats.satisfaction.mean }}</div>
+                                <div class="col-auto">{{ dataPopover(meanPopoverContent(ratingstats.satisfaction), title='Mean stats') }}</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>median</th>
+                        <td class="text-end">
+                            <div class="row g-0 align-items-center justify-content-end">
+                                <div class="col-auto">{{ ratingstats.satisfaction.med }}</div>
+                                <div class="col-auto">{{ dataPopover(medianPopoverContent(ratingstats.satisfaction), title='Quartile stats') }}</div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="card-footer">
+                <div class="row justify-content-end">
+                    <div class="col-auto">
+                        <div
+                            class="modal fade"
+                            id="satisfactionModal"
+                            tabindex="-1"
+                            data-bs-backdrop="static"
+                            data-bs-keyboard="false"
+                            
+                            role="dialog"
+                            aria-labelledby="satisfactionModalTitle"
+                            aria-hidden="true"
+                        >
+                            <div
+                                class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg"
+                                role="document"
+                            >
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="satisfactionModalTitle">
+                                            Satisfaction rating stats for last...
+                                        </h5>
+                                        <button
+                                            type="button"
+                                            class="btn-close"
+                                            data-bs-dismiss="modal"
+                                            aria-label="Close"
+                                        ></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    {% for h in ['', '7 days', '30 days', '180 days', 'All time'] %}
+                                                    <th class="text-center">{{ h }}</th>
+                                                    {% endfor %}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for si, h in [
+                                                    ('count', 'count'),
+                                                    ('mean', 'mean'),
+                                                    ('std', 'std. deviation'),
+                                                    ('min', 'min'),
+                                                    ('qtr1', '1st quartile'),
+                                                    ('med', 'median'),
+                                                    ('qtr3', '3rd quartile'),
+                                                    ('max', 'max'),
+                                                ] %}
+                                                <tr>
+                                                    <th>{{ h }}</th>
+                                                    {% for di in ['week', 'month', 'halfyear', 'all'] %}
+                                                    <td class="text-center">{{ ratingstats.timedata.satisfaction[di][si] }}</td>
+                                                    {% endfor %}
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <a type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#satisfactionModal">See time data</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header"><h2>Tags</h2></div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>count</th>
+                        <td class="text-end">{{ tagstats.count }}</td>
+                    </tr>
+                    <tr>
+                        <th>most commonly used</th>
+                        <td class="text-end">
+                            <div class="row g-2 align-items-center justify-content-end">
+                                <div class="col-auto">{{ tagRow(tagstats.mostcommon.tags) }}</div>
+                                <div class="col-auto">
+                                    {{ tagsCountPopover(tagstats.all, 'restaurantdb.tag', 'tag_id', title='All tag counts', tooltip='All tag counts') }}
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header"><h2>Notes</h2></div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>count</th>
+                        <td class="text-end">{{ notestats.count }}</td>
+                    </tr>
+                    <tr>
+                        <th>latest</th>
+                        <td class="text-end">
+                            <a class="defaultlink" href="{{ url_for('restaurantdb.note', note_id=notestats.latest.id) }}">{{ dateGrid(notestats.latest.date_added, multiline=False) }}</a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+<br>
+
+{{ popoverScript() }}
+
+{% endblock %}
+
+{% endblock %}

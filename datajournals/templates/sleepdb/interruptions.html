@@ -1,0 +1,17 @@
+{% extends 'sleepdb/index.html' %}
+{% from 'sleepdb/macros.html' import tagsLayout %}
+
+{% block subtitle %}Interruptions{% endblock %}
+
+{% block subcontent %}
+
+<div class="row">
+    <div class="col">
+        <h1>Tags - interruptions</h1>
+    </div>
+</div>
+<br>
+{{ tagsLayout(paginator, 'interruption') }}
+{{ basicpaginator('sleep', 'interruptions', paginator) }}
+
+{% endblock %}

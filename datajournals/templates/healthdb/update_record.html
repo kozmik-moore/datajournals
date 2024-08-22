@@ -1,0 +1,231 @@
+{% extends 'healthdb/index.html' %}
+
+{% block subtitle %}Update Record - {{ form.record_date.data.strftime('%m/%d/%Y %H%M') }}{% endblock %}
+
+{% block subcontent %}
+<div class="row">
+    <div class="col">
+        <h1>Update Record</h1>
+    </div>
+    <div class="col-auto">
+        <form method="POST" action="{{ url_for('healthdb.delete_record', record_id=record.id) }}">
+            <input type="submit" class="btn btn-outline-secondary" value="Delete" onclick="return confirm('Are you sure you want to delete this record?')">
+        </form>
+    </div>
+</div>
+<br>
+
+<script type="module">
+    import Tags from "https://cdn.jsdelivr.net/gh/lekoala/bootstrap5-tags@master/tags.js";
+    Tags.init("select", {separator: '|,|', addOnBlur:'true', allowNew: 'true', allowClear: 'false'});
+</script>
+
+<form method='POST' action="" enctype="multipart/form-data">
+    {{ form.csrf_token }}
+
+    <!-- Date -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.record_date.label(class='form-label') }}:
+            {{ form.record_date(class='form-control') }}
+        </div>
+    </div>
+
+    <!-- Record -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.record.label(class='form-label') }}:
+            {{ form.record(class='form-control', rows=7, placeholder='Add a record...') }}
+        </div>
+    </div>
+
+    <!-- Parent -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.parent_id() }}
+        </div>
+    </div>
+
+    <!-- Descriptors -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.descriptors.label(class='form-label') }}
+            {{ form.descriptors(class='form-select') }}
+        </div>
+    </div>
+
+    <!-- Emotions -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.emotions.label(class='form-label') }}
+            {{ form.emotions(class='form-select') }}
+        </div>
+    </div>
+
+    {# <!-- Descriptors -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            <label for="validationDescriptors" class="form-label">Descriptors:</label>
+            <select class="form-select" id="validationDescriptors" name="descriptors[]" multiple data-allow-new="true" data-allow-clear="true">
+                <option selected disabled hidden value="">Words to describe this record include...</option>
+                {% for descriptor in descriptors %}
+                <option value="{{ descriptor[0] }}" {{ descriptor[2] }}>{{ descriptor[1] }}</option>
+                {% endfor %}
+            </select>
+            <div class="invalid-feedback">Please select a valid descriptor.</div>
+        </div>
+    </div>
+
+    <!-- Emotions -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            <label for="validationEmotions" class="form-label">Emotions:</label>
+            <select class="form-select" id="validationEmotions" name="emotions[]" multiple data-allow-new="true" data-allow-clear="true">
+                <option selected disabled hidden value="">This record made me feel...</option>
+                {% for emotion in emotions %}
+                <option value="{{ emotion[0] }}" {{ emotion[2] }}>{{ emotion[1] }}</option>
+                {% endfor %}
+            </select>
+            <div class="invalid-feedback">Please select a valid emotion.</div>
+        </div>
+    </div> #}
+
+    <!-- Subrecords -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            <div class="accordion">
+                {# Glucose record #}
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#glucosePanel">
+                            Glucose record
+                        </button>
+                    </h2>
+                    <div class="accordion-collapse collapse {{ 'show' if 'glucose' in open_panels else '' }}" id="glucosePanel">
+                        <div class="accordion-body">
+                            <div class="row">
+                                <div class="col">
+                                    {{ form.glucose_measure.label }}
+                                    {{ form.glucose_measure(class='form-control') }}
+                                </div>
+                                <div class="col">
+                                    {{ form.glucose_units.label }}
+                                    {{ form.glucose_units(class='form-control', value='mg/dL') }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {# Cardio record #}
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cardioPanel">
+                            Cardio record
+                        </button>
+                    </h2>
+                    <div class="accordion-collapse collapse collapse {{ 'show' if 'cardio' in open_panels else '' }}" id="cardioPanel">
+                        <div class="accordion-body">
+                            <div class="row">
+                                <div class="col">
+                                    {{ form.systolic.label }}
+                                    {{ form.systolic(class='form-control') }}
+                                </div>
+                                <div class="col">
+                                    {{ form.diastolic.label }}
+                                    {{ form.diastolic(class='form-control') }}
+                                </div>
+                                <div class="col">
+                                    {{ form.heart_rate.label }}
+                                    {{ form.heart_rate(class='form-control') }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {# Pain record #}
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#painPanel">
+                            Pain record
+                        </button>
+                    </h2>
+                    <div class="accordion-collapse collapse {{ 'show' if 'pain' in open_panels else '' }}" id="painPanel">
+                        <div class="accordion-body">
+                            <div class="row">
+                                <div class="col">
+                                    {{ form.pain_level.label }}
+                                    {{ form.pain_level(class='form-control') }}
+                                </div>
+                                <div class="col">
+                                    {{ form.pain_description.label }}
+                                    {{ form.pain_description(class='form-control', rows=7) }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {# Weight record #}
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#weightPanel">
+                            Weight record
+                        </button>
+                    </h2>
+                    <div class="accordion-collapse collapse {{ 'show' if 'weight' in open_panels else '' }}" id="weightPanel">
+                        <div class="accordion-body">
+                            <div class="row">
+                                <div class="col">
+                                    {{ form.weight_measure.label }}
+                                    {{ form.weight_measure(class='form-control') }}
+                                </div>
+                                <div class="col">
+                                    {{ form.weight_units.label }}
+                                    {{ form.weight_units(class='form-control', value='lbs') }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attachments -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.attachments.label(class='form-label') }}:
+            {{ form.attachments(class='form-control') }}
+        </div>
+    </div>
+
+    <!-- "Tracked" status -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            <div class="form-check">
+                {{ form.is_tracked(class='form-check-input') }}
+                {{ form.is_tracked.label(class='form-check-label') }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Add link check -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            <div class="form-check">
+                {{ form.add_note(class='form-check-input') }}
+                {{ form.add_note.label(class='form-check-label') }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="row pt-3">
+        <div class="col-auto pe-1">{{ form.submit(class="btn btn-primary") }}</div>
+        <div class="col-auto px-0">
+            <a type="button" class="btn btn-primary" href="javascript:history.back()">Cancel</a>
+        </div>
+    </div>
+
+</form>
+<br>
+{% endblock %}

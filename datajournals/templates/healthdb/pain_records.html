@@ -1,0 +1,39 @@
+{% extends 'healthdb/index.html' %}
+{% from 'healthdb/macros.html' import createSubrecordLayout %}
+
+{% block subtitle %}Pain Records{% endblock %}
+
+{# Template to create section for individual records #}
+{% macro recordTemplate(record) %}
+<div class="row">
+    {# <div class="col-auto">
+        {{ 'Pain level: ' ~ record.pain_record[0].level }}
+    </div>
+    <div class="col">
+        {{ record.pain_record[0].description }}
+    </div> #}
+    <div class="col-auto ps-0">
+        <table class="table table-borderless">
+            <tbody>
+                <tr>
+                    <td>
+                        {{ 'Pain level: ' ~ record.pain_record[0].level }}
+                    </td>
+                    <td>
+                        {{ record.pain_record[0].description }}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endmacro %}
+
+{% block subcontent %}
+{{ createSubrecordLayout(
+    recordtype='pain',
+    paginator=paginator,
+    count=count,
+    recordtemplate=recordTemplate
+) }}
+{% endblock %}

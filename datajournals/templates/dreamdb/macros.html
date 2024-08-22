@@ -1,0 +1,212 @@
+{% from 'macros_components.html' import dateGrid, tagsRow %}
+
+<!-- Template to create a table of records -->
+{% macro createRecordsTable(records_paginator, date=True, tags=True, time_of_day=True, sleep_type=True) %}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">Record</th>
+            {% if date %}
+            <th scope="col">Date</th>
+            {% endif %}
+            {% if time_of_day %}
+            <th scope="col">Time of day</th>
+            {% endif %}
+            {% if sleep_type %}
+            <th scope="col">Sleep type</th>
+            {% endif %}
+            <th></th>
+        </tr>
+    </thead>
+    {% for record in records_paginator %}
+    <tr>
+        <tr>
+            <td>
+                <div class="row">
+                    <div class="col-auto">
+                    {% if record.record|length > 200 %}
+                        {{ record.record[:200]|markdown }}...
+                    {% else %}
+                        {{ record.record|markdown }}
+                    {% endif %}
+                    </div>
+                </div>
+                {% if record.notes %}
+                <div class="row">
+                    <div class="col-auto pe-0">
+                        <span class="badge rounded-pill bg-info text-dark opacity-75">Has notes</span>
+                    </div>
+                </div>
+                {% endif %}
+                {% if tags %}
+                <div class="row pb-1">
+                    {% for subject in record.subjects %}
+                        <div class="col-auto pe-1 py-1">
+                            <a class="text-primary text-decoration-none" href="{{ url_for('dreamdb.subject', subject_id=subject.id) }}">{{ subject.tag }}</a>
+                        </div>
+                    {% endfor %}
+                    {% for descriptor in record.descriptors %}
+                        <div class="col-auto pe-1 py-1">
+                            <a class="text-primary text-decoration-none" href="{{ url_for('dreamdb.descriptor', descriptor_id=descriptor.id) }}">{{ descriptor.tag }}</a>
+                        </div>
+                    {% endfor %}
+                    {% for emotion in record.emotions %}
+                        <div class="col-auto pe-1 py-1">
+                            <a class="text-primary text-decoration-none" href="{{ url_for('dreamdb.emotion', emotion_id=emotion.id) }}">{{ emotion.tag }}</a>
+                        </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </td>
+            {% if date %}
+            <td>
+                <div class="row">
+                    <div class="col-auto">
+                        {{ record.record_date.strftime('%a, %b %d, %Y') }}
+                    </div>
+                </div>
+            </td>
+            {% endif %}
+            {% if time_of_day %}
+            <td>
+                <div class="row">
+                    <div class="col-auto">
+                        {{ record.time_of_day }}
+                    </div>
+                </div>
+            </td>
+            {% endif %}
+            {% if sleep_type %}
+            <td>
+                <div class="row">
+                    <div class="col-auto">
+                        {{ record.sleep_type }}
+                    </div>
+                </div>
+            </td>
+            {% endif %}
+            <td>
+                <div class="row pb-1">
+                    <div class="col-auto">
+                        <a class="text-decoration-none" href="{{ url_for('dreamdb.record', record_id=record.id) }}">view</a>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </tr>
+    {% endfor %}
+</table>
+<br>
+
+{% endmacro %}
+
+
+{# MACRO dreamDateGrid:
+    Given a dream record object, displays the date in a stack. Optionally, display the date as a single line.
+#}
+{% macro dreamDateGrid(record, monthfmt='%b', dowfmt='%a', multiline=True, timeofday=True, sleeptype=True) %}
+{% set d = record.record_date %}
+{% set tod = record.time_of_day if record.time_of_day else '' %}
+{% set st = record.sleep_type %}
+{% if multiline %}
+<div class="row row-cols-1 g-0">
+    <div class="">{{ d.strftime(monthfmt + ' %d, %Y') }}</div>
+    {% if timeofday %}
+    <div>{{ tod }}</div>
+    {% endif %}
+    <div class="">{{ d.strftime(dowfmt) }}</div>
+    {% if sleeptype %}
+    <div>{{ st }}</div>
+    {% endif %}
+</div>
+{% else %}
+<div class="row">
+    <div class="col">
+        {{ d.strftime(monthfmt + ' %d, %Y' + '%s%s%s' % (', ' if tod else '', tod, ' (%s)' % dowfmt)) }}
+    </div>
+</div>
+{% endif %}
+{% endmacro %}
+
+
+{# MACRO dreamCard:
+    Given a dream record, displays some data from the record in a card format
+#}
+{% macro dreamCard(record, title=None) %}
+<div class="card h-100">
+    <div class="card-header"><h2>{{ 'Dream' if title is none else title}}</h2></div>
+    <div class="card-body">
+        {% if record %}
+        {{ record.record|markdown }}
+        <table class="table">
+            <tr>
+                <th></th>
+                <th></th>
+            </tr>
+            <tr>
+                <th>Date</th>
+                <td class="text-end">
+                    <a class="defaultlink" href="{{ url_for('dreamdb.record', record_id=record.id) }}">
+                        {{ dreamDateGrid(record, sleeptype=False, timeofday=False) }}
+                    </a>
+                </td>
+            </tr>
+            <tr>
+                <th>Time of day</th>
+                {% set a = {'timeofday': record.time_of_day} %}
+                <td class="text-end">
+                    {% if record.time_of_day %}
+                    <a class="defaultlink" href="{{ url_for('dreamdb.records', **a) }}">{{ record.time_of_day }}</a>
+                    {% else %}
+                    <p class="defaulttag m-0">None</p>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>Sleep type</th>
+                {% set a = {'sleeptype': record.sleep_type} %}
+                <td class="text-end">
+                    {% if record.sleep_type %}
+                    <a class="defaultlink" href="{{ url_for('dreamdb.records', **a) }}">{{ record.sleep_type }}</a>
+                    {% else %}
+                    <p class="defaulttag m-0">None</p>
+                    {% endif %}
+                </td>
+            </tr>
+            {% for h in ['subjects', 'descriptors', 'emotions'] %}
+            <tr>
+                <th>{{ h|capitalize }}</th>
+                <td class="text-end">{{ tagsRow('dreamdb.%s' % h[:-1], '%s_id' % h[:-1], record[h], align='end', alignempty='end') }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p class="text-center m-0">No record</p>
+        {% endif %}
+    </div>
+</div>
+
+{% endmacro %}
+
+
+{# MACRO tagRow():
+    Given a list of tags and a type, constructs a row of links, each link pointing to the page of that tag
+#}
+{% macro tagRow(tagtype, tags, align='start', alignempty='center') %}
+{% if tags %}
+<div class="row justify-content-{{ align }} g-3">
+    {% set urlstring = 'dreamdb.' + tagtype %}
+    {% for tag in tags|sort(attribute='tag') %}
+    {% set param = {tagtype + '_id': tag.id} %}
+    <div class="col-auto">
+        <a class="defaultlink" href="{{ url_for(urlstring, **param) }}">{{ tag.tag }}</a>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="row justify-content-{{ alignempty }}">
+    <div class="col-auto"><p class="defaulttag my-0">None</p></div>
+</div>
+{% endif %}
+{% endmacro %}

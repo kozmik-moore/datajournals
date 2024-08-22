@@ -1,0 +1,89 @@
+{% extends 'dreamdb/index.html' %}
+
+{% block subtitle %}Notes{% endblock %}
+
+{% block subcontent %}
+<div class="row justify-content-between">
+    <div class="col">
+        <h1>Notes</h1>
+    </div>
+    <div class="col-auto">
+        <h1><a type="button" class="btn btn-primary" href="{{ url_for('dreamdb.create_note')}}">Add</a></h1>
+    </div>
+</div>
+
+<table class="table">
+    <thead>
+        <th scope="row">Note</th>
+        <th scope="row">Record</th>
+        <th scope="row">Date Added</th>
+    </thead>
+    <tbody>
+    {% for note in pagination %}
+        <tr>
+            <td>
+                <div class="row">
+                    {% if note.note|length > 150 %}{{ note.note[:150]|wordwrap(50) ~ '...'|markdown }}{% else %}{{ note.note|wordwrap(50)|markdown }}{% endif %}
+                </div>
+                <div class="row">
+                    <div class="col-auto">
+                        <a class="text-decoration-none" href="{{ url_for('dreamdb.note', note_id=note.id) }}"><i>view note</i></a>
+                    </div>
+                    {% if note.important %}
+                    <div class="col-auto">
+                        <span class="badge rounded-pill bg-danger">Important</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </td>
+            {% if note.dream %}
+            <td>
+                <div class="row">
+                    {% if note.dream.record|length > 50 %}{{ note.dream.record[:50] ~ '...'|markdown }}{% else %}{{ note.dream.record|markdown }}{% endif %}
+                </div>
+                <div class="row">
+                    <a class="text-decoration-none" href="{{ url_for('dreamdb.dream', dream_id=note.dream.id) }}"><i>view record</i></a>
+                </div>
+            </td>
+            {% else %}
+            <td>
+                <p>No record</p>
+            </td>
+            {% endif %}
+            <td>{{ note.date_added.strftime('%A, %B, %d, %Y')}}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<br>
+
+<nav aria-label="...">
+    <ul class="pagination">
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('dreamdb.notes', page=1)}}">First</a>
+        </li>
+        {% if pagination.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('dreamdb.notes', page=pagination.prev_num) }}">Prev</a>
+            </li>
+        {% else %}
+            <li class="page-item">
+                <a class="page-link disabled" href="#">Prev</a>
+            </li>
+        {% endif %}
+        {% if pagination.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('dreamdb.notes', page=pagination.next_num) }}">Next</a>
+            </li>
+        {% else %}
+            <li class="page-item">
+                <a class="page-link disabled" href="#">Next</a>
+            </li>
+        {% endif %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('dreamdb.notes', page=pagination.pages) }}">Last</a>
+        </li>
+    </ul>
+</nav>
+
+{% endblock %}

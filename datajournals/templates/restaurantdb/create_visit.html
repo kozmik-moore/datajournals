@@ -1,0 +1,101 @@
+{% extends 'restaurantdb/index.html' %}
+
+{% block title %}Add Visit{% endblock %}
+
+{% block subcontent %}
+<h1>Add a Visit</h1>
+<br>
+
+<script type="module">
+    import Tags from "https://cdn.jsdelivr.net/gh/lekoala/bootstrap5-tags@master/tags.js";
+    Tags.init("select");
+</script>
+
+<form method="POST" action="">
+    {{ form.csrf_token }}
+
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.date.label(class='form-label') }}
+            {{ form.date(class='form-control') }}
+        </div>
+    </div>
+
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.name.label(class='form-label') }}
+            {{ form.name(class='form-select', data_suggestions_threshold='0') }}
+        </div>
+    </div>
+
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.meal.label(class='form-label') }}
+            {{ form.meal() }}
+        </div>
+    </div>
+
+    <div class="row pb-2">
+        <div class="col-md-6">
+            <div class="row">
+                <div class="col">
+                    {{ form.price_rating.label(class='form-label') }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    {% for field in form.price_rating %}
+                    <div class="form-check">
+                        {{ field(class='form-check-input', type='radio') }}
+                        {{ field.label(class='form-check-label') }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row pb-2">
+        <div class="col-md-6">
+            <div class="row">
+                <div class="col">
+                    {{ form.visit_rating.label(class='form-label') }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    {% for field in form.visit_rating %}
+                    <div class="form-check">
+                        {{ field(class='form-check-input', type='radio') }}
+                        {{ field.label(class='form-check-label') }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.comments.label(class='form-label') }}
+            {{ form.comments(class='form-control', rows=10) }}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-auto pe-1">{{ form.submit(class="btn btn-primary") }}</div>
+        <div class="col-auto px-0">
+            <a type="button" class="btn btn-primary" href="javascript:history.back()">Cancel</a>
+        </div>
+    </div>
+
+    <br>
+    
+
+</form>
+
+<script src="{{ url_for('static', filename='datefunctions.js') }}"></script>
+<script>
+    setDatetime('date')
+</script>
+{% endblock %}

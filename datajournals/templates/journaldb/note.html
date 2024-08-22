@@ -1,0 +1,63 @@
+{% extends 'dreamdb/index.html' %}
+
+{% block subtitle %}Note - {{ note.date_added.strftime('%a, %b %d, %Y') }}{% endblock %}
+
+{% block subcontent %}
+<div class="row justify-content-between">
+    <div class="col-auto">
+        <div class="row">
+            <div class="col">
+                <h1>Note</h1>
+            </div>
+            {% if note.important %}
+            <div class="col">
+                <h1><a type="button" class="btn btn-sm btn-outline-danger disabled" href="#">Important</a></h1>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-auto">
+        <h1><a type="button" class="btn btn-secondary" href="{{ url_for('dreamdb.update_note', note_id=note.id) }}">edit</a></h1>
+    </div>
+</div>
+<div class="row">
+    <div class="col">
+        <h3>{{ note.date_added.strftime('%a, %b %d, %Y') }}</h3>
+    </div>
+</div>
+<br>
+
+<p>{{ note.note|markdown }}</p>
+<br>
+
+<div class="row justify-content-between">
+    <div class="col-auto">
+        <h2>Record</h2>
+    </div>
+{% if note.dream %}
+    <div class="col-auto">
+        <h2><a type="button" class="btn btn-primary" href="{{ url_for('dreamdb.dream', dream_id=note.dream.id)}}">Go to record</a></h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col">
+        <p>{{ note.dream.record|markdown }}</p>
+    </div>
+</div>
+{% else %}
+    <div class="col-auto">
+        <h2><a type="button" class="btn btn-primary disabled" href="#">Go to record</a></h2>
+    </div>
+</div>
+
+<br>
+<hr>
+<div class="row justify-content-center">
+    <div class="col-auto">
+        No Record
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

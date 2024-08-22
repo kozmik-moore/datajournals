@@ -1,0 +1,267 @@
+{% extends 'gamingdb/index.html' %}
+{% from 'gamingdb/macros.html' import stringify_datespan, stringify_timespan, stringify_dowspan, notesTable, tagRow, ratingInfoTable, datespanGrid %}
+{% from 'macros_sections.html' import unlinkedTagListSection %}
+
+{% block subtitle %}{{ record.start_time.strftime('%a, %b %d, %Y') }}{% endblock %}
+
+{#===========================================================================================================================================================================#}
+
+{% macro timeMissingTag(session_interruption) %}
+{% if session_interruption.duration is none %}
+<a class="text-light text-decoration-none" href="{{ url_for('gamingdb.update_session_interruption', session_interruption_id=session_interruption.id) }}">
+    <span class="text-primary-emphasis bi-pencil"></span>
+</a>
+{% endif %}
+{% endmacro %}
+
+{% macro interruptionDurationRange(obj, fmt='%H:%M') %}
+{% set start, stop = obj.start_time, obj.stop_time  %}
+{% set start = start.strftime(fmt) + ' ' if start else '' %}
+{% set stop = ' ' + stop.strftime(fmt) if stop else '' %}
+{% set sep = '-' if start or stop else '' %}
+{% set tr = start + sep + stop %}
+<div class="row">
+    <div class="col">{{ tr if tr else 'No start or stop time' }}</div>
+</div>
+{% endmacro %}
+
+{#===========================================================================================================================================================================#}
+
+{% block subcontent %}
+
+<div class="row justify-content-between align-items-top align-items-sm-center">
+    <div class="col-6">
+        <h1>Session record <span class="{{ 'text-secondary bi-hourglass-split' if not record.start_time or not record.stop_time else '' }}"></span></h1>
+    </div>
+    <div class="col-auto">
+        <div class="dropdown">
+            <button
+                class="btn btn-primary btn-sm dropdown-toggle"
+                type="button"
+                id="triggerId"
+                data-bs-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+            >
+                options
+            </button>
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="triggerId">
+                <a class="dropdown-item" href="{{ url_for('gamingdb.update_record', record_id=record.id) }}">edit</a>
+                <a class="dropdown-item" href="{{ url_for('gamingdb.create_session_interruption', record_id=record.id) }}">add interruption</a>
+                <a class="dropdown-item" href="{{ url_for('gamingdb.create_note', record_id=record.id) }}">add note</a>
+                {% if not record.stop_time or not record.session_rating %}
+                <div class="dropdown-divider"></div>
+                {% endif %}
+                {% if not record.stop_time %}
+                {% set urlstring = url_for('gamingdb.quickupdate_record', record_id=record.id) %}
+                <a type="button" class="dropdown-item" onclick="set_time('{{ urlstring }}')">set stop time</a>
+                {% endif %}
+                {% if not record.session_rating %}
+                <a class="dropdown-item" href="{{ url_for('gamingdb.set_rating', record_id=record.id) }}">set rating</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+<br>
+
+<div class="row row-cols-1 g-4">
+    <div class="col">
+        <div class="row row-cols-1 row-cols-sm-2 g-4">
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h2>Times and durations</h2>
+                    </div>
+                    <div class="card-body">
+                        <table class="table">
+                            <tr>
+                                <th class="">Date</th>
+                                <td class="col-5 text-end">
+                                    {{ datespanGrid(record) }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="col-1">Session duration</th>
+                                <td class="text-end">{{ duration_session }}</td>
+                            </tr>
+                            <tr>
+                                <th class="col-1">Interruptions duration (total)</th>
+                                <td class="text-end">{{ duration_interruptions }}</td>
+                            </tr>
+                            <tr>
+                                <th class="col-1">Actual time playing</th>
+                                <td class="text-end">{{ duration_playing }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="row row-cols-1 g-4">
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h2>Game</h2>
+                            </div>
+                            <div class="card-body">
+                                <table class="table">
+                                    <tr>
+                                        <td class="text-end"><a class="text-decoration-none" href="{{ url_for('gamingdb.game', game_id=record.game_id) }}">{{ record.game.name }}</a></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h2>Ratings</h2>
+                            </div>
+                            <div class="card-body">
+                                <table class="table">
+                                    <tr>
+                                        <th class="align-middle">
+                                            <p class="mb-0">Session quality 
+                                                <span>
+                                                    <!-- You can dismiss by clicking somewhere -->
+                                                    <a
+                                                        tabindex="0"
+                                                        class="btn btn-sm"
+                                                        data-bs-toggle="popover"
+                                                        data-bs-html="true"
+                                                        data-bs-trigger="focus"
+                                                        title="Scale"
+                                                        data-bs-content='{{ ratingInfoTable() }}'
+                                                        >
+                                                        <span class="text-primary-emphasis bi-info-circle"></span>
+                                                    </a>                                                                                        
+                                                </span>
+                                            </p>
+                                        </th>
+                                        <td class="text-end">{{ record.session_rating }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h2>Emotions</h2>
+                            </div>
+                            <div class="card-body">
+                                {% for tt, tobj in [
+                                    ('emotion', record.emotions)    
+                                ] %}
+                                <table class="table">
+                                    <tr>
+                                        <td>
+                                            {{ tagRow(tt, tobj, align='end', alignempty='end') }}
+                                        </td>
+                                    </tr>
+                                </table>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card">
+            <div class="card-header">
+                <h2>Interruptions</h2>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Tags</th>
+                            <th class="col-6 col-sm-4 text-end text-sm-start">Times</th>
+                            <th class="col-2 text-center d-none d-sm-table-cell">Duration</th>
+                            <th class="col-1 text-end d-none d-sm-table-cell">Is complete</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for si in record.session_interruptions|sort(attribute='id', reverse=True) %}
+                        <tr>
+                            <td>
+                                {{ tagRow('interruption', si.tags) }}
+                            </td>
+                            <td class="col-6 col-sm-4 text-end text-sm-start">
+                                {{ interruptionDurationRange(si) }}                              
+                            </td>
+                            <td class="col-2 text-center d-none d-sm-table-cell">
+                                {% if si.duration is not none %}
+                                {{ si.duration|string + ' minute' + ('s' if si.duration != 1 else '')  }}
+                                {% else %}
+                                {{ timeMissingTag(si) }}
+                                {% endif %}
+                            </td>
+                            <td class="col-1 text-center d-none d-sm-table-cell">
+                                <span class="{{ 'text-primary bi-check-lg' if si.start_time and si.stop_time else '' }}"></span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div> 
+    </div>
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header">
+                <h2>Notes</h2>
+            </div>
+            <div class="card-body">
+                {% if record.notes %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date Added</th>
+                            <th class="text-end text-md-start">Content</th>
+                            <th class="d-none d-md-table-cell col-auto text-end">Important</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for note in paginator %}
+                        <tr>
+                            <td>
+                                <div class="row">
+                                    <div class="col-auto">
+                                        <a class="text-decoration-none" href="{{ url_for('gamingdb.note', note_id=note.id) }}">{{ note.date_added.strftime('%b %d, %Y, %H:%M (%a)') }}</a>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="col-6 text-end text-md-start">
+                                {{ note.note|markdown }}
+                            </td>
+                            <td class="col-1 d-none d-md-table-cell col-auto text-end"><span class="{{ 'bi-check-lg text-primary' if note.important else '' }}"></span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {{ basicpaginator('gaming', 'record', paginator, page_args=('record_id', record.id)) }}
+                {% else %}
+                <p class="text-center">No notes</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+<br>
+
+<script>
+    function set_time(doc){
+        var d = new Date();
+        var time = d.getTime() / 1000;
+        var newdoc = doc + '?time=' + time;
+        window.location.assign(newdoc);
+        return true;
+    }
+</script>
+
+{{ popoverScript() }}
+{% endblock %}

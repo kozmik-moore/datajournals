@@ -1,0 +1,17 @@
+{% extends 'dreamdb/index.html' %}
+{% from 'dreamdb/macros.html' import createRecordsTable %}
+
+{% block subtitle %}Subject - {{ subject.tag }}{% endblock %}
+
+{% block subcontent %}
+
+{{ taglayout(
+    databasename='dream',
+    tagtype='subject', 
+    recordsection=createRecordsTable(pagination, tags=False, time_of_day=False, sleep_type=False),
+    tagobject=subject, 
+    paginator=pagination,
+    ) 
+}}
+
+{% endblock %}

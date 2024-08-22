@@ -1,0 +1,337 @@
+{% extends 'base.html' %}
+{% from 'sleepdb/macros.html' import datetimerange_stringify %}
+
+{% block title %}SleepDB - {% block subtitle %}Dashboard{% endblock %}{% endblock %}
+
+{% macro datesPopover(records) %}
+    {% for r in records %}
+        <a class='defaultlink' href='{{ url_for("sleepdb.record", record_id=r.id) }}'>
+            <div class='row'>
+                <div class='col-auto'>{{ r.time_retire.strftime("%b, %d, %Y") }}</div>
+            </div>
+            <div class='row'>
+                <div class='col-auto'>{{ r.time_retire.strftime("%H:%M") }}</div>
+            </div>
+        </a>
+    {% endfor %}
+{% endmacro %}
+
+{% macro countsPopover(count, percent) %}
+    <div class="row g-1">
+        <div class="col-auto">{{ count }} ({{ percent }})</div>
+    </div>
+{% endmacro %}
+
+{% block content %}
+
+<!-- DB Navbar -->
+<div class="'container">
+    <div class="row justify-content-between gy-2">
+        <div class="col-auto ps-0">
+            <nav class="nav">
+                <ul class="nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('sleepdb.index') }}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('sleepdb.records') }}">Sessions</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('sleepdb.notes') }}">Notes</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Tags</a>
+                        <div class="dropdown-menu dropdown-menu-start">
+                            <a class="dropdown-item" href="{{ url_for('sleepdb.sensations') }}">Sensations</a>
+                            <a class="dropdown-item" href="{{ url_for('sleepdb.emotions') }}">Emotions</a>
+                            <a class="dropdown-item" href="{{ url_for('sleepdb.locations') }}">Locations</a>
+                            <a class="dropdown-item" href="{{ url_for('sleepdb.interruptions') }}">Interruptions</a>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Statistics</a>
+                        <div class="dropdown-menu dropdown-menu-start">
+                            <a class="dropdown-item" href="{{ url_for('sleepdb.sleepstats', sleeptype='regular') }}">Regular sleep</a>
+                            <a class="dropdown-item" href="{{ url_for('sleepdb.sleepstats', sleeptype='nap') }}">Naps</a>
+                            <a class="dropdown-item" href="{{ url_for('sleepdb.sleepstats', sleeptype='powernap') }}">Power naps</a>
+                            <a class="dropdown-item" href="{{ url_for('sleepdb.sleepstats', sleeptype='overall') }}">All sleep</a>
+                        </div>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        <div class="col-auto">
+            <div class="row">
+                <div class="col-auto d-flex align-items-end align-items-md-center">
+                    <a type="button" class="btn btn-primary btn-sm" href="{{ url_for('sleepdb.create_record')}}">Add session</a>
+                    <a type="button" class="btn btn-primary btn-sm ms-2" href="{{ url_for('sleepdb.create_note')}}">Add note</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<hr>
+
+{% block subcontent %}
+
+<!-- Header Info -->
+<div class="row justify-content-between">
+    <div class="col-auto">
+        <h1>Dashboard</h1>
+    </div>
+</div>
+<br>
+
+<div class="row row-cols-1 row-cols-sm-2 g-4">
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header">
+                <h2>Basic Statistics</h2>
+            </div>
+            <div class="card-body">
+                <h4>Latest</h4>
+                <table class="table">
+                    {% if not latest %}
+                    <tr>
+                        <th></th>
+                        <td class="text-end">None</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <th>date</th>
+                        <td class="text-end">
+                            <a class="defaultlink" href="{{ url_for('sleepdb.record', record_id=latest.id) }}">{{ datetimerange_stringify(latest) }}</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>complete?</th>
+                        <td class="text-end">
+                            {{ checkIcon(latest.time_rise) }}</td>
+                        </td>
+                    </tr>
+                    {% endif %}
+                </table>
+                <h4>Counts</h4>
+                <table class="table">
+                    {% for n, d, o in [
+                        ('regular sleep', 'greater than 4 hours', stats.durationstats.reg),
+                        ('naps', 'between 30 minutes and 4 hours', stats.durationstats.nap),
+                        ('power nap', 'less than 30 minutes', stats.durationstats.pnap),
+                        ('all sleep', 'all completed sleep sessions', stats.durationstats.all),
+                    ] %}
+                    <tr>
+                        <th class="align-middle">
+                            <div class="row align-items-center g-0">
+                                <div class="col-auto">{{ n }}</div>
+                                <div class="col-auto">
+                                    <a tabindex="0" class="btn btn-sm" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-html="true" title="description" data-bs-content="{{ d }}">
+                                        <span class="text-primary-emphasis bi-info-circle"></span>
+                                    </a>
+                                </div>
+                            </div>
+                        </th>
+                        <td class="text-end">{{ o.asleep.count }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr>
+                        <th class="align-middle">
+                            <div class="row align-items-center g-0">
+                                <div class="col-auto">all records</div>
+                                <div class="col-auto">
+                                    <a tabindex="0" class="btn btn-sm" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-html="true" title="description" data-bs-content="includes incomplete sessions">
+                                        <span class="text-primary-emphasis bi-info-circle"></span>
+                                    </a>
+                                </div>
+                            </div>
+                        </th>
+                        <td class="text-end">{{ stats.recordscount }}</td>
+                    </tr>
+                    <tr>
+                        <th>notes</th>
+                        <td class="text-end">{{ stats.notescount }}</td>
+                    </tr>
+                </table>
+                <h4 class="">Sums (all sessions)</h4>
+                <table class="table">
+                    <tbody>
+                        {% for m, a, d in [
+                            ('asleep', 'asleep', 'from start of sleep until end'),
+                            ('interruptions', 'interruption_duration', 'sum of all interruptions'),
+                            ('asleep (adjusted)', 'asleep_adjusted', 'sleep duration adjusted for interruptions'),
+                            ('awake', 'awake', 'time awake in bed'),
+                            ('in bed', 'in_bed', 'total time in bed, asleep and awake'),
+                        ] %}
+                        <tr>
+                            <th class="align-middle">
+                                <div class="row align-items-center g-0">
+                                    <div class="col-auto">{{ m }}</div>
+                                    <div class="col-auto">
+                                        <a tabindex="0" class="btn btn-sm" data-bs-toggle="popover" data-bs-trigger="focus" title="description" data-bs-content="{{ d }}">
+                                            <span class="text-primary-emphasis bi-info-circle"></span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </th>
+                            <td class="text-end">{{stats.durationstats.all[a].sum}}</td>
+                        </tr>
+                    </tbody>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header">
+                <h2>Notable days</h2>
+            </div>
+            <div class="card-body">
+                {% for l, o in [
+                    ('Regular sleep', stats.durationstats.reg),
+                    ('Naps', stats.durationstats.nap),
+                    ('Power naps', stats.durationstats.pnap),
+                    ] %}
+                <h3>{{ l }}</h3>
+                <table class="table">
+                    <tr>
+                        <th class="align-middle">last entry</th>
+                        <td class="text-end align-middle">
+                            {% set dt = o.daystats.last.time_retire %}
+                            {% set dtd, dtw, dtt = '', '', '' %}
+                            {% if dt %}
+                            {% set dtd, dtw, dtt = dt.strftime('%b %d, %Y'), ' (' + dt.strftime('%a') + ')', dt.strftime('%H:%M')  %}
+                            {% endif %}
+                            <div class="row justify-content-end">
+                                <div class="col-auto">{{ dtd }}<span class="d-none d-sm-inline">{{ dtw }}</span></div>
+                            </div>
+                            <div class="row justify-content-end">
+                                <div class="col-auto">{{ dtt  }}</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="align-middle">first entry</th>
+                        <td class="text-end align-middle">
+                            {% set dt = o.daystats.first.time_retire %}
+                            {% set dtd, dtw, dtt = '', '', '' %}
+                            {% if dt %}
+                            {% set dtd, dtw, dtt = dt.strftime('%b %d, %Y'), ' (' + dt.strftime('%a') + ')', dt.strftime('%H:%M')  %}
+                            {% endif %}
+                            <div class="row justify-content-end">
+                                <div class="col-auto">{{ dtd }}<span class="d-none d-sm-inline">{{ dtw }}</span></div>
+                            </div>
+                            <div class="row justify-content-end">
+                                <div class="col-auto">{{ dtt }}</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="align-middle">longest time asleep</th>
+                        {% set td = o.daystats.longest %}
+                        <td class="text-end align-middle">
+                            <div class="row justify-content-end align-items-center g-0">
+                                <div class="col-auto">{{ td.duration }}</div>
+                                <div class="col-auto">
+                                    {% if td.records %}
+                                    <a tabindex="0" data-bs-trigger="focus" class="btn btn-sm" data-bs-toggle="popover" data-bs-title="Session{{ 's' if td.records|length > 1 else '' }}" data-bs-html="true" data-bs-sanitize="false" data-bs-content="{{ datesPopover(td.records) }}">
+                                        <span class="text-primary-emphasis bi-info-circle"></span>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="align-middle">shortest time asleep</th>
+                        {% set td = o.daystats.shortest %}
+                        <td class="text-end align-middle">
+                            <div class="row justify-content-end align-items-center g-0">
+                                <div class="col-auto">{{ td.duration }}</div>
+                                <div class="col-auto">
+                                    {% if td.records %}
+                                    <a tabindex="0" data-bs-trigger="focus" class="btn btn-sm" data-bs-toggle="popover" data-bs-title="Session{{ 's' if td.records|length > 1 else '' }}" data-bs-html="true" data-bs-sanitize="false" data-bs-content="{{ datesPopover(td.records) }}">
+                                        <span class="text-primary-emphasis bi-info-circle"></span>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% for t, s in {
+        'sensation': stats.tagstats.sensations,
+        'emotion': stats.tagstats.emotions,
+        'location': stats.tagstats.locations,
+        'interruption': stats.tagstats.interruptions
+    }.items() %}
+    {% set urlstring = 'sleepdb.' + t %}
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header">
+                <h2>{{ t|capitalize }}s</h2>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th class="align-middle">most used tag{{ 's' if s.mostcommon.tags|length != 1 else '' }}</th>
+                        <td class="align-middle text-end">
+                            <div class="row g-2 align-items-center justify-content-end">
+                                {% for tag in s.mostcommon.tags %}
+                                {% set params = {t + '_id': tag.id} %}
+                                <div class="col-auto">
+                                    <a class="text-decoration-none" href="{{ url_for(urlstring, **params) }}">{{ tag.tag }}</a>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td class="col-1 align-middle text-end d-table-cell d-md-none">
+                            <a tabindex="0" class="btn btn-sm" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-html="true" title="counts" data-bs-content='{{ countsPopover(s.mostcommon.count, s.mostcommon.percent) }}'>
+                                <span class="text-primary-emphasis bi-info-circle"></span>
+                            </a>
+                        </td>
+                        <td class="col-1 text-end align-middle d-none d-md-table-cell">{{ s.mostcommon.count }}</td>
+                        <td class="col-1 text-end align-middle d-none d-md-table-cell">({{ s.mostcommon.percent }})</td>
+                    </tr>
+                    <tr>
+                        <th class="align-middle">least used tag{{ 's' if s.leastcommon.tags|length != 1 else '' }}</th>
+                        <td class="align-middle text-end">
+                            <div class="row g-2 align-items-center justify-content-end">
+                                {% for tag in s.leastcommon.tags %}
+                                {% set params = {t + '_id': tag.id} %}
+                                <div class="col-auto">
+                                    <a class="text-decoration-none" href="{{ url_for(urlstring, **params) }}">{{ tag.tag }}</a>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td class="col-1 align-middle text-end d-table-cell d-md-none">
+                            <a tabindex="0" class="btn btn-sm" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-html="true" title="counts" data-bs-content='{{ countsPopover(s.leastcommon.count, s.leastcommon.percent) }}'>
+                                <span class="text-primary-emphasis bi-info-circle"></span>
+                            </a>
+                        </td>
+                        <td class="col-1 text-end align-middle d-none d-md-table-cell">{{ s.leastcommon.count }}</td>
+                        <td class="col-1 text-end align-middle d-none d-md-table-cell">({{ s.leastcommon.percent }})</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<br>
+
+<script>
+    const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
+    const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl))
+    const popover = new bootstrap.Popover('.popover-dismiss', {
+        trigger: 'focus'
+    })
+</script>
+
+{% endblock %}
+
+{% endblock %}

@@ -1,0 +1,276 @@
+{% extends 'sleepdb/index.html' %}
+{% from 'sleepdb/macros.html' import tagRow, recordsTable, popoverScript %}
+
+{% block subtitle %}{{ tagtype|capitalize }} - {{ tag.tag }}{% endblock %}
+
+{% macro durationDescription() %}
+<div class="row row-cols-1">
+    <div class="col">Duration statistics are calculated based on attempted sleep time, that is, sleep start and stop times.</div>
+    <div class="col">Once interruptions are accounted for, actual sleep may be less than the category being filtered for.</div>
+    <div class="col">Example: a session whose attempted sleep time is 35 minutes but interruptions total 10 minutes would still be counted as a "nap" rather than a "power nap".</div>
+</div>
+{% endmacro %}
+
+{% block subcontent %}
+<div class="row justify-content-between align-items-center g-4">
+    <div class="col">
+        <h1>{{ tagtype|capitalize }} - {{ tag.tag }}</h1>
+    </div>
+    <div class="col-auto">
+        {% set params = {'tagtype': tagtype, 'tagid': tag.id} %}
+        <a class="btn btn-sm btn-primary" href="{{ url_for('sleepdb.update_tag', **params) }}">edit</a>
+    </div>
+</div>
+<br>
+
+<div class="row row-cols-1 row-cols-sm-2 g-4">
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header">
+                <h2>Basic statistics</h2>
+            </div>
+            <div class="card-body">
+                <h3>Counts</h3>
+                <table class="table">
+                    {% for p, v in [
+                        ('regular sleep', stats.reg),
+                        ('naps', stats.nap),
+                        ('power naps', stats.pnap),
+                        ] %}
+                    <tr>
+                        <th>{{ p }}</th>
+                        <td class="text-end">
+                            <div class="row row-cols-2 g-2 justify-content-end">
+                                <div class="col-auto">{{ v.in_bed.count }}</div>
+                                <div class="col-auto">({{ v.proportion }})</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <tr>
+                        <th>
+                            unfinished sessions
+                            <a
+                                tabindex="0"
+                                class="btn btn-sm"
+                                data-bs-toggle="popover"
+                                data-bs-trigger="focus"
+                                title="Description"
+                                data-bs-content="sessions missing start or stop times or rise time"
+                                >
+                                <span class="text-primary-emphasis bi-info-circle"></span>
+                            </a>
+                        </th>
+                        <td class="text-end">
+                            <div class="row row-cols-2 g-2 justify-content-end">
+                                <div class="col-auto">{{ stats.unfinished.count }}</div>
+                                <div class="col-auto">({{ stats.unfinished.proportion }})</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>
+                            total
+                            <a
+                                tabindex="0"
+                                class="btn btn-sm"
+                                data-bs-toggle="popover"
+                                data-bs-trigger="focus"
+                                title="Description"
+                                data-bs-content="proportion of all {{ tagtype }} tags"
+                                >
+                                <span class="text-primary-emphasis bi-info-circle"></span>
+                            </a>
+                        </th>
+                        <td class="text-end">
+                            <div class="row row-cols-2 g-2 justify-content-end">
+                                <div class="col-auto">{{ stats.count }}</div>
+                                <div class="col-auto">({{ stats.proportion }})</div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header">
+                <h2>Tag usage</h2>
+            </div>
+            <div class="card-body">
+                <h3>
+                    <div class="row row-cols-2 align-items-center g-0">
+                        <div class="col-auto">Duration statistics</div>
+                        <div class="col-auto">
+                            <a
+                                tabindex="0"
+                                class="btn btn-sm"
+                                data-bs-toggle="popover"
+                                data-bs-trigger="focus"
+                                data-bs-html="true"
+                                title="Note"
+                                data-bs-content='{{ durationDescription() }}'
+                                >
+                                <span class="text-primary-emphasis bi-info-circle"></span>
+                            </a> 
+                        </div>
+                    </div>                                       
+                </h3>
+                <table class="table">
+                    {% for h, d, n, i in [
+                        ('Sleep', 'adjusted for interruptions and time awake in bed (actual sleep)', 'Sleep', 'asleep_adjusted'),
+                        ('Interruptions', 'during actual sleep', 'Interruption', 'interruption_duration'),
+                        ('Awake', 'in bed but not sleeping (not including interruptions)', 'Awake', 'awake'),
+                        ('In bed', 'total time in bed', 'InBed', 'in_bed'),
+                    ] %}
+                    {% set mid = 'modal' + n %}
+                    {% set mtid = 'modalTitle' + n %}
+                    <tr>
+                        <th>
+                            {{ h }}
+                            <a
+                                tabindex="0"
+                                class="btn btn-sm"
+                                data-bs-toggle="popover"
+                                data-bs-trigger="focus"
+                                title="Description"
+                                data-bs-content="{{ d }}"
+                                >
+                                <span class="text-primary-emphasis bi-info-circle"></span>
+                            </a>                            
+                        </th>
+                        <td class="text-end">
+                            <a type="button" class="btn btn-sm" data-bs-toggle="modal" data-bs-target="#{{ mid }}">
+                                <span class="text-primary-emphasis bi-box-arrow-up-right"></span>
+                            </a>
+                            
+                            <!-- Modal Body -->
+                            <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
+                            <div class="modal fade" id="{{ mid }}" tabindex="-1" role="dialog" aria-labelledby="{{ mtid }}" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-xl modal-fullscreen-md-down" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h3 class="modal-title" id="{{ mtid }}">{{ h }}</h3>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <table class="table table-responsive table-bordered table-hover">
+                                                <thead class="">
+                                                    <tr>
+                                                        {% for h in [
+                                                            '',
+                                                            'session count',
+                                                            'mean',
+                                                            'st deviation',
+                                                            'minimum',
+                                                            '1st quartile',
+                                                            'median',
+                                                            '3rd quartile',
+                                                            'maximum',
+                                                            'sum',
+                                                            ] %}
+                                                        <th class="col-1 text-center">{{ h }}</th>
+                                                        {% endfor %}
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for h, si in [
+                                                        ('Regular sleep', 'reg'),
+                                                        ('Naps', 'nap'),
+                                                        ('Power naps', 'pnap'),
+                                                        ('All sleep', 'all'),
+                                                        ] %}
+                                                        <tr>
+                                                            <th class="text-start">{{ h }}</th>
+                                                            {% for p in [
+                                                                'count',
+                                                                'mean',
+                                                                'std',
+                                                                'min',
+                                                                'qtr1',
+                                                                'med',
+                                                                'qtr3',
+                                                                'max',
+                                                                'sum',
+                                                                ] %}
+                                                            <td class="text-center">{{ stats[si][i][p] }}</td>
+                                                            {% endfor %}
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div class="modal-footer d-none d-md-block">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row pt-4">
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header"><h2>Sessions</h2></div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col">{{ recordsTable(paginator, displayinterruptions=True, displayratings=True) }}</div>
+                </div>
+                {% set prev_disabled = '' if paginator.prev_num else 'disabled' %}
+                {% set next_disabled = '' if paginator.next_num else 'disabled' %}
+                <div class="row">
+                    <div class="col">
+                        <nav aria-label="...">
+                            <ul class="pagination">
+                                {% set args = {'tagtype': tagtype, 'tagid': tag.id, 'page': 1} %}
+                                <li class="page-item">
+                                    <a class="page-link {{ prev_disabled }}" href="{{ url_for('sleepdb.tag', **args)}}#recordstable">
+                                        <span class="d-none d-sm-inline">First</span>
+                                        <span class="d-inline d-sm-none bi-chevron-bar-left"></span>
+                                    </a>
+                                </li>
+                                {% set args = {'tagtype': tagtype, 'tagid': tag.id, 'page': paginator.prev_num} %}
+                                <li class="page-item">
+                                    <a class="page-link {{ prev_disabled }}" href="{{ url_for('sleepdb.tag', **args) }}#recordstable">
+                                        <span class="d-none d-sm-inline">Prev</span>
+                                        <span class="d-inline d-sm-none bi-chevron-left"></span>
+                                    </a>
+                                </li>
+                                {% set args = {'tagtype': tagtype, 'tagid': tag.id, 'page': paginator.next_num} %}
+                                <li class="page-item">
+                                    <a class="page-link {{ next_disabled }}" href="{{ url_for('sleepdb.tag', **args) }}#recordstable">
+                                        <span class="d-none d-sm-inline">Next</span>
+                                        <span class="d-inline d-sm-none bi-chevron-right"></span>
+                                    </a>
+                                </li>
+                                {% set args = {'tagtype': tagtype, 'tagid': tag.id, 'page': paginator.pages} %}
+                                <li class="page-item">
+                                    <a class="page-link {{ next_disabled }}" href="{{ url_for('sleepdb.tag', **args) }}#recordstable">
+                                        <span class="d-none d-sm-inline">Last</span>
+                                        <span class="d-inline d-sm-none bi-chevron-bar-right"></span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                    <div class="col-auto">
+                        {% if paginator.pages %}
+                        {{ paginator.page }} of {{ paginator.pages }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<br>
+{{ popoverScript() }}
+
+{% endblock %}

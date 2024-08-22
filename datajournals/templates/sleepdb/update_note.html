@@ -1,0 +1,117 @@
+{% extends 'sleepdb/index.html' %}
+{% from 'sleepdb/macros.html' import daterange_stringify, timerange_stringify, dowrange_stringify, tagRow, interruptionsTagRow %}
+
+{% block subtitle %}Edit Note{% endblock %}
+
+{% block subcontent %}
+
+<div class="row justify-content-between align-items-sm-center">
+    <div class="col">
+        <h1>Edit note</h1>
+    </div>
+    <div class="col-auto">
+        <!-- Modal trigger button -->
+        <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteNote">
+          Delete
+        </button>
+        
+        <!-- Modal Body -->
+        <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
+        <div class="modal fade" id="deleteNote" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="deleteTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteTitle">Delete note</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-0">Are you sure want to delete this note?</p>
+                        <p><i>This cannot be reversed.</i></p>
+                    </div>
+                    <div class="modal-footer">
+                        <form method="POST" action="{{ url_for('sleepdb.delete_note', note_id=note.id) }}">
+                            <input type="submit" class="btn btn-danger" value="Delete">
+                        </form>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<br>
+
+<form method="POST" action="">
+    {{ form.csrf_token }}
+
+    <div class="row row-cols-1 row-cols-sm-2 g-4">
+
+        <!-- Note -->
+        <div class="col">
+            {{ form.note(class='form-control', style='height: 100%;', placeholder='Add a note...', rows=10) }}
+        </div>
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h2>Session details</h2>
+                </div>
+                <div class="card-body">
+                    {% if note.record %}
+                    {% set r = note.record %}
+                    <table class="table">
+                        <tr>
+                            <th class="align-middle">Date</th>
+                            <td class="text-end">
+                                <div class="row justify-content-end">
+                                    <div class="col-auto">{{ daterange_stringify(r) }}</div>
+                                </div>
+                                <div class="row justify-content-end">
+                                    <div class="col-auto">{{ timerange_stringify(r) }}</div>
+                                </div>
+                                <div class="row justify-content-end">
+                                    <div class="col-auto">{{ dowrange_stringify(r) }}</div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% for tt, tobj in {'sensation': r.sensations, 'emotion': r.emotions, 'location': r.locations }.items() %}
+                        <tr>
+                            <th class="align-middle">{{ tt|capitalize }}s</th>
+                            <td class="text-end">{{ tagRow(tt, tobj, align='end', alignempty='end') }}</td>
+                        </tr>
+                        {% endfor %}
+                        <tr>
+                            <th class="align-middle">Interruptions</th>
+                            <td class="text-end">{{ interruptionsTagRow(r) }}</td>
+                        </tr>
+                    </table>
+                    {% else %}
+                    <div class="row align-self-stretch">
+                        <div class="col">
+                            <p class="text-center">No record</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="row row-cols-2 g-2 mb-2">
+                <div class="col-auto">
+                    {{ form.important(class='form-check-input') }}
+                </div>
+                <div class="col-auto">
+                    {{ form.important.label(class='form-check-label') }}
+                </div>
+            </div>
+            <div class="row row-col-2 g-2">
+                <div class="col-auto">{{ form.submit(class="btn btn-primary") }}</div>
+                <div class="col-auto">
+                    <a type="button" class="btn btn-primary" href="javascript:history.back()">Cancel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br>
+</form>
+<br>
+{% endblock %}

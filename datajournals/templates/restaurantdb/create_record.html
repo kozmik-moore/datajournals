@@ -1,0 +1,63 @@
+{% extends 'restaurantdb/index.html' %}
+
+{% block title %}Add Restaurant{% endblock %}
+
+{% block subcontent %}
+<h1>Add a Restaurant</h1>
+<br>
+
+{{ messageFlasher() }}
+{{ bootstrapTagsScript() }}
+
+<form method="POST" action="">
+    {{ form.csrf_token }}
+
+    <div class="row row-cols-1 g-4">
+        <div class="col">
+            <div class="row row-cols-1 row-cols-md-2 g-2 g-md-4">
+                <div class="col">
+                    <div class="row row-cols-1 g-2">
+                        <div class="col">
+                            {{ form.name(class='form-control', placeholder='Restaurant name...') }}
+                        </div>
+                        <div class="col">
+                            {{ form.tags(class='form-select') }}
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    {{ form.description(class='form-control', rows=3, style='height:100%;', placeholder='Add a description...') }}
+                </div>
+                <div class="col">
+                    <div class="row g-2">
+                        <div class="col-auto">
+                            {{ form.avoid(class='form-check-input') }}
+                        </div>
+                        <div class="col-auto">
+                            {{ form.avoid.label(class='form-check-label') }}
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-auto">
+                            {{ form.add_visit(class='form-check-input') }}
+                        </div>
+                        <div class="col-auto">
+                            {{ form.add_visit.label(class='form-check-label') }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="row g-2">
+                <div class="col-auto">{{ form.submit(class="btn btn-primary") }}</div>
+                <div class="col-auto">
+                    <a type="button" class="btn btn-primary" href="{{ request.referrer }}">Cancel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br>
+    
+</form>
+{% endblock %}

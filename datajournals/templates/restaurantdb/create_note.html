@@ -1,0 +1,52 @@
+{% extends 'restaurantdb/index.html' %}
+{% from 'restaurantdb/macros.html' import restaurantCard %}
+
+{% block title %}Add Note{% endblock %}
+
+{% block subcontent %}
+<h1>Add a Note</h1>
+<br>
+
+{{ bootstrapTagsScript() }}
+
+<form method="POST" action="">
+    {{ form.csrf_token }}
+
+    <div class="row row-cols-1 g-4">
+        <div class="col">
+            <div class="row row-cols-1 row-cols-md-2 g-4">
+                <div class="col">
+                    <div class="row row-cols-1 g-2">
+                        <div class="col">
+                            {{ form.name(class='form-control', data_suggestions_threshold='0') }}
+                        </div>
+                        <div class="col">
+                            {{ form.note(class='form-control', rows=10, placeholder='Add a note...') }}
+                        </div>
+                        <div class="col">
+                            <div class="row g-2">
+                                <div class="col-auto">
+                                    {{ form.important(class='form-check-input') }}
+                                </div>
+                                <div class="col-auto">
+                                    {{ form.important.label(class='form-check-label') }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>        
+                </div>
+                <div class="col">{{ restaurantCard(record) }}</div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="row g-2">
+                <div class="col-auto">{{ form.submit(class="btn btn-primary") }}</div>
+                <div class="col-auto">
+                    <a type="button" class="btn btn-primary" href="{{ request.referrer }}">Cancel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+<br>
+{% endblock %}

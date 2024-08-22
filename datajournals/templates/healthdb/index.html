@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}HealthDB - {% block subtitle %}Dashboard{% endblock %}{% endblock %}
+
+{% set links = (
+    ('Health Dashboard', url_for('healthdb.index')),
+    ('Records', url_for('healthdb.records')),
+    ('Descriptors', url_for('healthdb.descriptors')),
+    ('Emotions', url_for('healthdb.emotions')),
+    ('Glucose', url_for('healthdb.glucose')),
+    ('Cardio', url_for('healthdb.cardio')),
+    ('Pain', url_for('healthdb.pain')),
+    ('Weight', url_for('healthdb.weight')),
+    ('Notes', url_for('healthdb.notes')),
+) %}
+
+{% block content %}
+
+<!-- DB Navbar -->
+{{ navsection(
+    databasename='health',
+    navlinks=links
+) }}
+
+
+{% block subcontent %}
+
+<!-- Header Info -->
+<div class="row justify-content-between">
+    <div class="col-auto">
+        <h1>Health Dashboard</h1>
+    </div>
+</div>
+<br>
+
+<div class="row row-cols-2 row-cols-md-3">
+
+    <!-- Records Data -->
+    <div class="col pb-2">
+        <div class="card h-100">
+            <!-- <img src="..." class="card-img-top" alt="..."> -->
+            <div class="card-body">
+                <h5 class="card-title">Records</h5>
+                <p class="card-text">Health data and statistics.</p>
+                <div class="row">
+                    <div class="col-auto pe-0 pb-1">
+                        <a type="button" class="btn btn-primary" href="{{ url_for('healthdb.records')}}">View Records</a>
+                    </div>
+                    <div class="col-auto pe-0">
+                        <a type="button" class="btn btn-primary" href="{{ url_for('healthdb.create_record')}}">Add Record</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notes Data -->
+    <div class="col pb-2">
+        <div class="card h-100">
+            <!-- <img src="..." class="card-img-top" alt="..."> -->
+            <div class="card-body">
+                <h5 class="card-title">Notes</h5>
+                <p class="card-text">Notes data and statistics.</p>
+                <div class="row">
+                    <div class="col-auto pe-0 pb-1">
+                        <a type="button" class="btn btn-primary" href="{{ url_for('healthdb.notes')}}">View Notes</a>
+                    </div>
+                    <div class="col-auto pe-0">
+                        {# <a type="button" class="btn btn-primary" href="{{ url_for('healthdb.create_note')}}">Add Note</a> #}
+                        <a type="button" class="btn btn-primary" href="#">Add Note</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Descriptors Data -->
+    <div class="col pb-2">
+        <div class="card h-100">
+            <!-- <img src="..." class="card-img-top" alt="..."> -->
+            <div class="card-body">
+                <h5 class="card-title">Descriptors</h5>
+                <p class="card-text">Descriptor Tags data and statistics.</p>
+                <a href="{{ url_for('healthdb.descriptors')}}" class="btn btn-primary">View Descriptors</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emotions Data -->
+    <div class="col pb-2">
+        <div class="card h-100">
+            <!-- <img src="..." class="card-img-top" alt="..."> -->
+            <div class="card-body">
+                <h5 class="card-title">Emotions</h5>
+                <p class="card-text">Emotion Tags data and statistics.</p>
+                <a href="{{ url_for('healthdb.emotions')}}" class="btn btn-primary">View Emotions</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Glucose Data -->
+    <div class="col pb-2">
+        <div class="card h-100">
+            <!-- <img src="..." class="card-img-top" alt="..."> -->
+            <div class="card-body">
+                <h5 class="card-title">Glucose</h5>
+                <p class="card-text">Glucose record data and statistics.</p>
+                <div class="row">
+                    <div class="col-auto pe-0 pb-1">
+                        <a href="{{ url_for('healthdb.glucose')}}" class="btn btn-primary">View Records</a>
+                    </div>
+                    <div class="col-auto pe-0">
+                        <a type="button" class="btn btn-primary" href="{{ url_for('healthdb.create_subrecord', sr_type='glucose')}}">Quick Record</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cardio Data -->
+    <div class="col pb-2">
+        <div class="card h-100">
+            <!-- <img src="..." class="card-img-top" alt="..."> -->
+            <div class="card-body">
+                <h5 class="card-title">Cardio</h5>
+                <p class="card-text">Cardio record data and statistics.</p>
+                <div class="row">
+                    <div class="col-auto pe-0 pb-1">
+                        <a href="{{ url_for('healthdb.cardio')}}" class="btn btn-primary">View Records</a>
+                    </div>
+                    <div class="col-auto pe-0">
+                        <a type="button" class="btn btn-primary" href="{{ url_for('healthdb.create_subrecord', sr_type='cardio')}}">Quick Record</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pain Data -->
+    <div class="col pb-2">
+        <div class="card h-100">
+            <!-- <img src="..." class="card-img-top" alt="..."> -->
+            <div class="card-body">
+                <h5 class="card-title">Pain</h5>
+                <p class="card-text">Pain record data and statistics.</p>
+                <div class="row">
+                    <div class="col-auto pe-0 pb-1">
+                        <a href="{{ url_for('healthdb.pain')}}" class="btn btn-primary">View Records</a>
+                    </div>
+                    <div class="col-auto pe-0">
+                        <a type="button" class="btn btn-primary" href="{{ url_for('healthdb.create_subrecord', sr_type='pain')}}">Quick Record</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weight Data -->
+    <div class="col pb-2">
+        <div class="card h-100">
+            <!-- <img src="..." class="card-img-top" alt="..."> -->
+            <div class="card-body">
+                <h5 class="card-title">Weight</h5>
+                <p class="card-text">Weight record data and statistics.</p>
+                <div class="row">
+                    <div class="col-auto pe-0 pb-1">
+                        <a href="{{ url_for('healthdb.weight')}}" class="btn btn-primary">View Records</a>
+                    </div>
+                    <div class="col-auto pe-0">
+                        <a type="button" class="btn btn-primary" href="{{ url_for('healthdb.create_subrecord', sr_type='weight')}}">Quick Record</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<br>
+
+{% endblock %}
+
+{% endblock %}

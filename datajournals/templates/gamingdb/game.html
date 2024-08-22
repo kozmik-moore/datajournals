@@ -1,0 +1,152 @@
+{% extends 'gamingdb/index.html' %}
+{% from 'gamingdb/macros.html' import recordsTable, notesTable, tagRow, popoverScript, basicUsageTable, descriptiveStatsTable, tagAssociationsTable %}
+
+{% block subtitle %}Game - {{ game.name }}{% endblock %}
+
+{% block subcontent %}
+
+<div class="row row-cols-2 justify-content-between align-items-top align-items-md-center">
+    <div class="col-6">
+        <h1>Game: {{ game.name }}</h1>
+    </div>
+    <div class="col-auto"><div class="dropdown">
+        <button
+            class="btn btn-primary btn-sm dropdown-toggle"
+            type="button"
+            id="triggerId"
+            data-bs-toggle="dropdown"
+            aria-haspopup="true"
+            aria-expanded="false"
+        >
+            options
+        </button>
+        <div class="dropdown-menu dropdown-menu-end" aria-labelledby="triggerId">
+            <a class="dropdown-item" href="{{ url_for('gamingdb.update_game', game_id=game.id) }}">edit</a>
+            <a class="dropdown-item" href="{{ url_for('gamingdb.create_note', game_id=game.id) }}">add note</a>
+        </div>
+    </div>
+    </div>
+</div>
+
+<br>
+
+<div class="row row-cols-1 g-4">
+    <div class="col">
+        <div class="row row-cols-1 row-cols-sm-2 g-4">
+            {% for h, f in [
+                ('Basic usage', basicUsageTable(stats.usage)),
+                ('Commonly associated tags', tagAssociationsTable(stats)),
+                ('Duration stats', descriptiveStatsTable(stats.durations, includesum=True)),
+                ('Rating stats', descriptiveStatsTable(stats.ratings)),
+            ]%}
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h2>{{ h }}</h2>
+                    </div>
+                    <div class="card-body">
+                        {{ f }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="col">
+        <div class="card" id="recordscard">
+            <div class="card-header">
+                <h2>Sessions</h2>
+            </div>
+            <div class="card-body">
+                {{ recordsTable(paginator=recordpaginator, displaygame=False, displaytags=False, shortmonth=True) }}
+                <br>
+                
+                {# records paginator #}
+                {% set record_prev_disabled = '' if recordpaginator.has_prev else 'disabled' %}
+                {% set record_next_disabled = '' if recordpaginator.has_next else 'disabled' %}
+                
+                <div class="row">
+                    <div class="col">
+                        <nav aria-label="...">
+                            <ul class="pagination">
+                                {% set args = {'game_id': game.id, 'recordspage': 1, 'notespage': notepaginator.page} %}
+                                <li class="page-item">
+                                    <a class="page-link {{ record_prev_disabled }}" href="{{ url_for('gamingdb.game', **args)}}#recordscard">First</a>
+                                </li>
+                                {% set args = {'game_id': game.id, 'recordspage': recordpaginator.prev_num, 'notespage': notepaginator.page} %}
+                                    <li class="page-item">
+                                        <a class="page-link {{ record_prev_disabled }}" href="{{ url_for('gamingdb.game', **args) }}#recordscard">Prev</a>
+                                    </li>
+                                {% set args = {'game_id': game.id, 'recordspage': recordpaginator.next_num, 'notespage': notepaginator.page} %}
+                                    <li class="page-item">
+                                        <a class="page-link {{ record_next_disabled }}" href="{{ url_for('gamingdb.game', **args) }}#recordscard">Next</a>
+                                    </li>
+                                {% set args = {'game_id': game.id, 'recordspage': recordpaginator.pages, 'notespage': notepaginator.page} %}
+                                <li class="page-item">
+                                    <a class="page-link {{ record_next_disabled }}" href="{{ url_for('gamingdb.game', **args) }}#recordscard">Last</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                    <div class="col-auto">
+                        {% if recordpaginator.pages %}
+                        {{ recordpaginator.page }} of {{ recordpaginator.pages }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card" id="notescard">
+            <div class="card-header">
+                <h2>Notes</h2>
+            </div>
+            <div class="card-body">
+                {{ notesTable(paginator=notepaginator, displaygame=notesdisplaygame) }}
+                <br>
+                
+                
+                {# notes paginator #}
+                {% set note_prev_disabled = '' if notepaginator.has_prev else 'disabled' %}
+                {% set note_next_disabled = '' if notepaginator.has_next else 'disabled' %}
+                
+                <div class="row">
+                    <div class="col">
+                        <nav aria-label="...">
+                            <ul class="pagination">
+                                {% set args = {'game_id': game.id, 'notespage': 1, 'recordspage': recordpaginator.page} %}
+                                <li class="page-item">
+                                    <a class="page-link {{ note_prev_disabled }}" href="{{ url_for('gamingdb.game', **args)}}#notescard">First</a>
+                                </li>
+                                {% set args = {'game_id': game.id, 'notespage': notepaginator.prev_num, 'recordspage': recordpaginator.page} %}
+                                    <li class="page-item">
+                                        <a class="page-link {{ note_prev_disabled }}" href="{{ url_for('gamingdb.game', **args) }}#notescard">Prev</a>
+                                    </li>
+                                {% set args = {'game_id': game.id, 'notespage': notepaginator.next_num, 'recordspage': recordpaginator.page} %}
+                                    <li class="page-item">
+                                        <a class="page-link {{ note_next_disabled }}" href="{{ url_for('gamingdb.game', **args) }}#notescard">Next</a>
+                                    </li>
+                                {% set args = {'game_id': game.id, 'notespage': notepaginator.pages, 'recordspage': recordpaginator.page} %}
+                                <li class="page-item">
+                                    <a class="page-link {{ note_next_disabled }}" href="{{ url_for('gamingdb.game', **args) }}#notescard">Last</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                    <div class="col-auto">
+                        {% if notepaginator.pages %}
+                        {{ notepaginator.page }} of {{ notepaginator.pages }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<br>
+
+{{ popoverScript() }}
+
+{% endblock %}

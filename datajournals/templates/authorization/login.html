@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}Login{% endblock %}
+
+
+{% block navbar %}
+<div class="container-xxl pt-5 pb-4 bg-secondary-subtle">
+    <div class="row">
+        <div class="col-auto">
+            <img src="{{ url_for('static', filename='bluerose_data_48.png') }}" alt="">
+        </div>
+        <div class="col">
+            <div class="row">
+                <div class="col">
+                    <h2>Roselandblue.com:</h2>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <h2>Data Journals</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block content %}
+
+<!-- <div class="row">
+    <div class="col">
+        <h1>Welcome to roselandblue.com's Data Journals!</h1>
+    </div>
+</div>
+<br> -->
+
+<div class="row d-flex justify-content-between">
+    <div class="col">
+        <form class="form-control" action="{{ request.path }}" method="POST">
+            {{ form.csrf_token }}
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            <!-- Categories: success (green), info (blue), warning (yellow), danger (red) -->
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{category}} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            {{ form.next_() }}
+
+            <div class="row">
+                {#<div class="col-auto">
+                    <img src="{{ url_for('static', filename='bluerose_data_64.png') }}" alt="">
+                </div>#}
+                <div class="col-9">
+                    <div class="row align-items-center">
+                        <div class="col-md-6 pb-2">
+                            {{ form.username.label }}:
+                            {{ form.username(class='form-control') }}
+                            {% for error in form.username.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 pb-2">
+                            {{ form.password.label }}:
+                            {{ form.password(class='form-control') }}
+                            {% for error in form.password.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="row py-1">
+                        <div class="col-auto">
+                            {{ form.submit(class='btn btn-primary') }}
+                        </div>
+                        <div class="col ps-0">
+                            <a class="btn btn-primary" href="javascript:history.back()">Cancel</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    var next = document.getElementById('next_')
+    if (next.value === ""){
+        next.value = "{{ request.args.get('next', '')}}"
+    }
+</script>
+{% endblock %}

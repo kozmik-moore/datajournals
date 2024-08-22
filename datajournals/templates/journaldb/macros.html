@@ -1,0 +1,135 @@
+{% from 'macros_components.html' import dateGrid, tagsRow, checkIcon %}
+{# Create the records table #}
+{% macro createRecordsTable(records_paginator, badges=True, tags=True, date=True) %}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">Record</th>
+            {% if date %}
+            <th scope="col">Date</th>
+            {% endif %}
+            <th></th>
+        </tr>
+    </thead>
+    {% for record in records_paginator %}
+    <tr>
+        <tr>
+            <td>
+                <div class="row">
+                    <div class="col">
+                    {% if record.record|length > 200 %}
+                        {{ record.record[:200]|markdown }}...
+                    {% else %}
+                        {{ record.record|markdown }}
+                    {% endif %}
+                    </div>
+                </div>
+                {% if badges %}
+                <div class="row pb-1">
+                    {% if record.children %}
+                    <div class="col-auto pe-0">
+                        <span class="badge rounded-pill bg-info text-dark opacity-75">Parent</span>
+                    </div>
+                    {% endif %}
+                    {% if record.parent %}
+                    <div class="col-auto pe-0">
+                        <span class="badge rounded-pill bg-info text-dark opacity-75">Child</span>
+                    </div>
+                    {% endif %}
+                    {% if record.attachments %}
+                    <div class="col-auto pe-0">
+                        <span class="badge rounded-pill bg-info text-dark opacity-75">Attachments</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% if tags %}
+                <div class="row pb-1">
+                    {% for subject in record.subjects %}
+                        <div class="col-auto pe-1 py-1">
+                            <a class="text-primary text-decoration-none" href="{{ url_for('journaldb.subject', subject_id=subject.id) }}">{{ subject.tag }}</a>
+                        </div>
+                    {% endfor %}
+                    {% for descriptor in record.descriptors %}
+                        <div class="col-auto pe-1 py-1">
+                            <a class="text-primary text-decoration-none" href="{{ url_for('journaldb.descriptor', descriptor_id=descriptor.id) }}">{{ descriptor.tag }}</a>
+                        </div>
+                    {% endfor %}
+                    {% for emotion in record.emotions %}
+                        <div class="col-auto pe-1 py-1">
+                            <a class="text-primary text-decoration-none" href="{{ url_for('journaldb.emotion', emotion_id=emotion.id) }}">{{ emotion.tag }}</a>
+                        </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </td>
+            {% if date %}
+            <td>
+                <div class="row">
+                    <div class="col-auto">
+                        {{ record.record_date.strftime('%a, %b %d, %Y %H:%M') }}
+                    </div>
+                </div>
+            </td>
+            {% endif %}
+            <td>
+                <div class="row">
+                    <div class="col-auto">
+                        <a class="text-decoration-none" href="{{ url_for('journaldb.record', record_id=record.id) }}">view</a>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </tr>
+    {% endfor %}
+</table>
+<br>
+
+{% endmacro %}
+
+
+{# MACRO entryCard 
+    Given a record, constructs a card displaying details. if no record is supplied, displays a card stating that.
+#}
+{% macro entryCard(record, title='Entry') %}
+<div class="card h-100">
+    <div class="card-header"><h2>{{ title }}</h2></div>
+    <div class="card-body">
+        {% if record %}
+        {{ record.record|markdown }}
+        <table class="table">
+            <tr>
+                <th>Date</th>
+                <td class="text-end">
+                    <a class="defaultlink" href="{{ url_for('journaldb.record', record_id=record.id) }}" target="_blank">
+                        {{ dateGrid(record.record_date, multiline=False) }}
+                    </a>
+                </td>
+            </tr>
+            <tr>
+                <th>Unfinished</th>
+                <td class="text-end">
+                    {{ checkIcon(record.unfinished) }}
+                </td>
+            </tr>
+            <tr>
+                <th>Watched</th>
+                <td class="text-end">
+                    {{ checkIcon(record.watched) }}
+                </td>
+            </tr>
+            {% for i in ['subjects', 'descriptors', 'emotions'] %}
+            <tr>
+                <th>{{ i|capitalize }}</th>
+                <td class="text-end">{{ tagsRow('journaldb.tag', i, record[i], legacy=False) }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p class="defaulttag text-center m-2">None</p>
+        {% endif %}
+    </div>
+</div>
+
+{% endmacro %}

@@ -1,0 +1,202 @@
+{% extends 'dreamdb/index.html' %}
+{% from 'dreamdb/macros.html' import dreamDateGrid %}
+
+{% block subtitle %}Notes{% endblock %}
+
+{% block subcontent %}
+
+{{ bootstrapTagsScript(allownew='false') }}
+
+<div class="row justify-content-between align-items-center">
+    <div class="col"><h1>Notes</h1></div>
+    <div class="col-auto">
+        <form action="" method="post">
+            {{ form.csrf_token }}
+            {% if (dreamrecord, content, important, hasrecord)|select|first %}
+            <div class="btn-group">
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalId">Filter</button>
+                <button type="button" class="btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="visually-hidden">Toggle dropdown</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="{{ url_for('dreamdb.notes', remove='all') }}">Clear all filters</a></li>
+                </ul>
+            </div>
+            {% else %}
+            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalId">Filter</button>
+            {% endif %}
+            <div
+                class="modal fade"
+                id="modalId"
+                tabindex="-1"
+                data-bs-backdrop="static"
+                data-bs-keyboard="false"
+                
+                role="dialog"
+                aria-labelledby="modalTitleId"
+                aria-hidden="true"
+            >
+                <div
+                    class="modal-dialog modal-dialog-centered modal-md"
+                    role="document"
+                >
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalTitleId">
+                                Filter notes
+                            </h5>
+                            <button
+                                type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Close"
+                            ></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row row-cols-1 g-4">
+                                <div class="col">
+                                    {{ form.content(class='form-control', placeholder='Content of note...', autocomplete='off') }}
+                                </div>
+                                <div class="col">
+                                    {{ form.important(class='form-select', placeholder='Marked important') }}
+                                </div>
+                                <div class="col">
+                                    {{ form.hasrecord(class='form-select', placeholder='Has record') }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <div class="row g-2">
+                                {% if (dreamrecord, content, important, hasrecord)|select|first %}
+                                <div class="col-auto">
+                                    <a class="btn btn-secondary" href="{{ url_for('dreamdb.notes', remove='all') }}">Clear all filters</a>
+                                </div>
+                                {% endif %}
+                                <div class="col-auto">{{ form.submit(class='btn btn-primary') }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>       
+        </form>
+    </div>
+</div>
+{% if dreamrecord %}
+<div class="row align-items-center g-2">
+    <div class="col-auto">For the dream on:</div>
+    <div class="col-auto">
+        <div class="row align-items-center g-1">
+            <div class="col-auto">
+                <a class="defaultlink" href="{{ url_for('dreamdb.record', record_id=dreamrecord.id) }}">{{ dreamDateGrid(dreamrecord, multiline=False) }}</a>
+            </div>
+            <div class="col-auto">
+                <a class="text-body text-no-decoration" href="{{ url_for('dreamdb.notes', remove='record') }}">
+                    <span class="text-body bi-x"></span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% if (content, important, hasrecord)|select|first %}
+<div class="row align-items-center g-2">
+    <div class="col-auto">Filtered by:</div>
+    {% for l, f, v in [
+        ('has record', 'hasrecord', hasrecord),
+        ('important', 'important', important),
+        ('content', 'content', content),
+    ] %}
+    {% if v %}
+    <div class="col-auto">
+        <a href="{{ url_for('dreamdb.notes', remove=f) }}"><span class="badge pill text-bg-primary">{{ l }}: {{ v }} <span class="bi-x"></span></span></a>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
+<br>
+
+<table class="table align-top">
+    <thead>
+        <tr>
+            <th></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for n in paginator %}
+        <tr>
+            <td class="col-2 d-none d-md-table-cell">
+                <div class="row row-cols-1 g-3">
+                    <div class="col">
+                        <a title="Note" class="defaultlink fw-bold" href="{{ url_for('dreamdb.note', note_id=n.id) }}">
+                            {{ dateGrid(n.date_added, monthfmt='%B', dowfmt='%A') }}
+                        </a>
+                    </div>
+                    {% if n.important %}
+                    <div class="col">
+                        {{ checkIcon(n.important, icontrue='exclamation-square-fill', colortrue='danger', text=' Important') }}
+                    </div>
+                    {% endif %}
+                    <div class="col">
+                        {% if n.record %}
+                        <a title="Record" class="defaultlink" href="{{ url_for('dreamdb.record', record_id=n.record.id) }}">View dream<span class="bi-arrow-right-short"></span></a>
+                        {% else %}
+                        <p class="defaulttag m-0">No dream record</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="row">
+                </div>
+            </td>
+            <td>
+                <div class="row row-cols-1 g-3 g-md-0">
+                    <div class="col">
+                        <div class="row justify-content-between align-items-center d-block-inline d-md-none">
+                            <div class="col-auto">
+                                <h6 class="mt-1">
+                                    <a title="Note" class="defaultlink" href="{{ url_for('dreamdb.note', note_id=n.id) }}">
+                                        {{ dateGrid(n.date_added, monthfmt='%B', dowfmt='%A', multiline=False) }}
+                                    </a>
+                                </h6>
+                            </div>
+                            <div class="col-auto">
+                                {{ checkIcon(n.important, colortrue='danger', icontrue='exclamation-square-fill', iconfalse='') }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="row">
+                            {% set c = n.note %}
+                            {% if content %}
+                            {% set cns = namespace(c=n.note) %}
+                            {% for cv in [content|upper, content|capitalize, content|lower] %}
+                            {% set sc = cns.c.split(cv) %}
+                            {% set cns.c = sc|join('<span class="text-warning-emphasis">%s</span>' % cv) %}
+                            {% endfor %}
+                            {% set c = cns.c %}
+                            {% endif %}
+                            <div class="col">{{ c|markdown }}</div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="row d-block-inline d-md-none justify-content-end">
+                            <div class="col-auto">
+                                {% if n.record %}
+                                <a class="defaultlink" href="{{ url_for('dreamdb.record', record_id=n.record.id) }}">View dream<span class="bi-arrow-right-short"></span></a>
+                                {% else %}
+                                <p class="defaulttag m-0">No dream record</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{{ basicpaginator('dream', 'notes', paginator) }}
+<br>
+
+{% endblock %}

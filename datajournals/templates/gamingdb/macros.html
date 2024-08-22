@@ -1,0 +1,597 @@
+{% from 'macros_components.html' import createBadge, infoButton, checkIcon %}
+
+{% macro stringify_session(record, format='%A, %B %d, %Y %H:%M') %}
+{% set stop_str = record.stop_time.strftime(format=format) if record.stop_time else '' %}
+{{ record.start_time.strftime(format=format) + ' - ' + stop_str }}
+{% endmacro %}
+
+{% macro stringify_datespan(record, fmt='long', monthfmt='%b', dowenabled=True) %}
+{% set dowstring = ' (' + stringify_dowspan(record) + ')' if dowenabled else '' %}
+{% if fmt == 'long' %}
+{% if not record.stop_time %}
+{{ record.start_time.strftime(monthfmt + ' %d, %Y -') + dowstring }}
+{% elif record.start_time.year != record.stop_time.year %}
+{{ record.start_time.strftime(monthfmt + ' %d, %Y - ') + record.stop_time.strftime(monthfmt + ' %d, %Y') + dowstring }}
+{% elif record.start_time.month != record.stop_time.month %}
+{{ record.start_time.strftime(monthfmt + ' %d - ') + record.stop_time.strftime(monthfmt + ' %d, %Y') + dowstring }}
+{% elif record.start_time.day != record.stop_time.day %}
+{{ record.start_time.strftime(monthfmt + ' %d - ') + record.stop_time.strftime('%d, %Y') + dowstring }}
+{% else %}
+{{ record.start_time.strftime(monthfmt + ' %d, %Y') + dowstring }}
+{% endif %}
+{% endif %}
+{% endmacro %}
+
+{% macro stringify_timespan(record, format='%H:%M') %}
+{% set stop_str = record.stop_time.strftime(format=format) if record.stop_time else '' %}
+{{ record.start_time.strftime(format=format) + ' - ' + stop_str }}
+{% endmacro %}
+
+{% macro stringify_dowspan(record, format='short') %}
+{% set dowfmt = '%a' %}
+{% set dowlen = none %}
+{% if format == 'long' %}
+{% set dowfmt = '%A' %}
+{% elif format == 'letters' %}
+{% set dowlen = 2 %}
+{% endif %}
+{% if not record.stop_time or record.start_time.date() == record.stop_time.date() %}
+{{ record.start_time.strftime(dowfmt)[:dowlen] }}
+{% elif record.start_time.day != record.stop_time.day %}
+{{ record.start_time.strftime(dowfmt)[:dowlen] + ' - ' + record.stop_time.strftime(dowfmt)[:dowlen] }}
+{% endif %}
+{% endmacro %}
+
+
+{% macro datespanGrid(record, datefmt='long', monthfmt='%b', timefmt='%H:%M', dowfmt='short') %}
+<div class="row row-cols-1 g-0">
+    <div class="col">{{ stringify_datespan(record, datefmt, monthfmt, dowenabled=False) }}</div>
+    <div class="col">{{ stringify_timespan(record, timefmt) }}</div>
+    <div class="col">{{ stringify_dowspan(record, dowfmt) }}</div>
+</div>
+{% endmacro %}
+
+
+{% macro dateGrid(date, monthfmt='%b', timefmt='%H:%M', dowfmt='%a', multiline=True, singlelinefmt='%b %d, %Y, %H:%M (%a)') %}
+{% if multiline %}
+<div class="row row-cols-1 g-0">
+    <div class="">{{ date.strftime(monthfmt + ' %d, %Y') }}</div>
+    <div class="">{{ date.strftime(timefmt) }}</div>
+    <div class="">{{ date.strftime(dowfmt) }}</div>
+</div>
+{% else %}
+<div class="row">
+    <div class="col">
+        {{ date.strftime(singlelinefmt) }}
+    </div>
+</div>
+{% endif %}
+{% endmacro %}
+
+
+{% macro statsCardBody(recordstats, title='Usage') %}
+<div class="card-body">
+    <div class="row">
+        <div class="col">
+            <h5 class="card-title">{{ title }}</h5>
+            <table class="table">
+                <tr>
+                    <th><h6 class="card-title"></h6>frequency</th>
+                    <td><p class="card-text text-end">{{ recordstats.frequency }}</p></td>
+                </tr>
+                <tr>
+                    <th><h6 class="card-title"></h6>complete sessions</th>
+                    <td><p class="card-text text-end">{{ recordstats.durations.count }}</p></td>
+                </tr>
+                <tr>
+                    <th><h6 class="card-title"></h6>incomplete sessions</th>
+                    <td><p class="card-text text-end">{{ recordstats.incomplete }}</p></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <h5 class="card-title">Session duration</h5>
+            <table class="table">
+                <tr>
+                    <th><h6 class="card-title">sum</h6></th>
+                    <td><p class="card-text text-end">{{ recordstats.durations.sum }}</p></td>
+                </tr>
+                <tr>
+                    <th><h6 class="card-title">mean</h6></th>
+                    <td><p class="card-text text-end">{{ recordstats.durations.mean }}</p></td>
+                </tr>
+                <tr>
+                    <th><h6 class="card-title">std. deviation</h6></th>                        
+                    <td><p class="card-text text-end">{{ recordstats.durations.stdev }}</p></td>
+                </tr>
+                <tr>
+                    <th><h6 class="card-title">median</h6></th>
+                    <td><p class="card-text text-end">{{ recordstats.durations.median }}</p></td>
+                </tr>
+                <tr>
+                    <th><h6 class="card-title">IQR</h6></th>
+                    <td><p class="card-text text-end">{{ recordstats.durations.iqr }}</p></td>
+                </tr>
+            </table> 
+        </div>
+        <div class="col">
+            <h5 class="card-title">Session rating</h5>
+            <table class="table">
+                <tr>
+                    <th><h6 class="card-title"></h6>count</th>
+                    <td><p class="card-text text-end">{{ recordstats.ratings.count }}</p></td>
+                </tr>
+                <tr>
+                    <th><h6 class="card-title">mean</h6></th>
+                    <td><p class="card-text text-end">{{ recordstats.ratings.mean }}</p></td>
+                </tr>
+                <tr>
+                    <th><h6 class="card-title">std. deviation</h6></th>                        
+                    <td><p class="card-text text-end">{{ recordstats.ratings.stdev }}</p></td>
+                </tr>
+                <tr>
+                    <th><h6 class="card-title">median</h6></th>
+                    <td><p class="card-text text-end">{{ recordstats.ratings.median }}</p></td>
+                </tr>
+                <tr>
+                    <th><h6 class="card-title">IQR</h6></th>
+                    <td><p class="card-text text-end">{{ recordstats.ratings.iqr }}</p></td>
+                </tr>
+            </table> </div>
+    </div>             
+</div>
+{% endmacro %}
+
+
+{# simpleStatsTable #}
+{% macro simpleStatsTable(statstupleslist) %}
+<table class="table">
+    {% for h, d in statstupleslist %}
+    <tr>
+        <th>{{ h }}</th>
+        <td class="text-end">{{ d }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endmacro %}
+
+
+{# simpleStatsGrid - for use where a table will not work (e.g. Popovers) #}
+{% macro simpleStatsGrid(statstupleslist) %}
+<div class="row row-cols-2 g-2">
+    {% for h, d in statstupleslist %}
+    <div class="col-8">{{ h }}</div>
+    <div class="col-4">{{ d }}</div>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+
+{# basicUsageTable #}
+{% macro basicUsageTable(statsobject) %}
+{% set statslist = [
+    ('frequency', statsobject.frequency),
+    ('complete sessions', statsobject.complete),
+    ('incomplete sessions', statsobject.incomplete), 
+] %}
+{{ simpleStatsTable(statslist) }}
+{% endmacro %}
+
+
+{# descriptiveStatsTable #}
+{% macro descriptiveStatsTable(statsobject, includesum=False) %}
+
+{% macro meanDisplay() %}
+<div class="row row-cols-2 align-items-center g-0">
+    <div class="col-auto">mean</div>
+    <div class="col-1">
+        <a
+            tabindex="0"
+            class="btn btn-sm"
+            data-bs-toggle="popover"
+            data-bs-trigger="focus"
+            data-bs-html="true"
+            title="Mean stats"
+            data-bs-content='{{ simpleStatsGrid([("mean", statsobject.mean), ("st. deviation", statsobject.std)]) }}'
+        >
+        {{ infoButton(title='Mean and standard deviation') }}
+        </a>
+    </div>
+</div>
+{% endmacro %}
+
+{% macro medianDisplay() %}
+<div class="row row-cols-2 align-items-center g-0">
+    <div class="col-auto">median</div>
+    <div class="col-1">
+        <a
+            tabindex="0"
+            class="btn btn-sm"
+            data-bs-toggle="popover"
+            data-bs-trigger="focus"
+            data-bs-html="true"
+            title="Quartile stats"
+            data-bs-content='{{ simpleStatsGrid([
+                ("min", statsobject.min),
+                ("1st quartile", statsobject.qtr1),
+                ("median", statsobject.med),
+                ("3rd quartile", statsobject.qtr3),
+                ("max", statsobject.max),
+                ]) 
+            }}'
+        >
+        {{ infoButton(title='All quartile stats') }}
+        </a>
+    </div>
+</div>
+{% endmacro %}
+
+{% set sl = [
+    ('count', statsobject.count),
+    (meanDisplay(), statsobject.mean),
+    (medianDisplay(), statsobject.med),
+] %}
+{% if includesum %}
+{% set sl = sl + [('sum', statsobject.sum)] %}
+{% endif %}
+{{ simpleStatsTable(sl) }}
+{% endmacro %}
+
+{% macro popoverContentTags(name, object) %}
+<div class="row row-cols-3 g-2">
+    {% set urlstring, param = 'gamingdb.' + name, name + '_id' %}
+    {% for r in object %}
+    {% set urlarg = {param: r[0].id} %}
+    <div class="col-7"><a class="defaultlink" href="{{ url_for(urlstring, **urlarg) }}">{{ r[0].tag }}</a></div>
+    <div class="col-2">{{ r[1] }}</div>
+    <div class="col-3">({{ r[2] }})</div>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+
+{# tagAssociationsTable #}
+{% macro tagAssociationsTable(statsobject) %}
+<div class="row row-cols-1 g-4">
+    {% for n, o in [
+        ('emotion', statsobject.emotions),
+        ('interruption', statsobject.interruptions),   
+    ] %}
+    <div class="col">
+        <div class="row">
+            <div class="col">
+                <h6 class="card-title">{{ n }}s</h6>
+            </div>
+        </div>
+        <table class="table">
+            <tr>
+                {% if o.mostcommon.tags %}
+                <td>
+                    {{ tagRow(n, o.mostcommon.tags) }}
+                </td>
+                <td class="col-1 text-end">{{ o.mostcommon.count }}</td>
+                <td class="col-1 text-end">({{ o.mostcommon.proportion }})</td>
+                <td class="col-1">
+                    <a
+                        tabindex="0"
+                        class="btn btn-sm"
+                        data-bs-toggle="popover"
+                        data-bs-trigger="focus"
+                        data-bs-html="true"
+                        data-bs-placement="left"
+                        title="Associated {{ n }} tags"
+                        data-bs-content='{{ popoverContentTags(n, o.all) }}'
+                    >
+                    {{ infoButton() }} 
+                    </a>
+                </td>
+                {% else %}
+                <td class="text-center">
+                    No associated {{ n }} tags
+                </td>
+                {% endif %}
+            </tr>
+        </table>
+    </div>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+
+{# recordsTable #}
+{% macro recordsTable(paginator, displaygame=False, displaytags=False, displayinterruptions=True, shortmonth=False) %}
+<div id="recordstable" class="row">
+    <div class="col">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th class="col-6 col-sm-3">Session</th>
+                    {% if displaytags %}
+                    <th class="d-none d-sm-table-cell text-start">Emotions</th>
+                    {% endif %}
+                    <th class="col-1 d-none d-md-table-cell text-center">Is complete</th>
+                    <th class="col-1 d-none d-sm-table-cell text-center">Has notes?</th>
+                    {% if displayinterruptions %}
+                    <th class="col-1 d-none d-sm-table-cell text-center">Has interruptions?</th>
+                    {% endif %}
+                    {% if displaygame %}
+                    <th class="col-6 col-sm-2 text-end">Game</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in paginator %}
+                <tr>
+                    <td>
+                        <div class="row pb-3">
+                            <div class="col-auto">
+                                <a class="text-decoration-none" href="{{ url_for('gamingdb.record', record_id=record.id) }}">
+                                    <div class="row">
+                                        <div class="col">{{ stringify_datespan(record, monthfmt='%B' if not shortmonth else '%b', dowenabled=False) }}</div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col">{{ stringify_timespan(record) }}</div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col">{{ stringify_dowspan(record) }}</div>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </td>
+                    {% if displaytags %}
+                    <td class="d-none d-sm-table-cell text-start">
+                        <div class="row">
+                            <div class="col-auto">
+                                <div class="row">
+                                    {% for emotion in record.emotions|sort(attribute='tag') %}
+                                    <div class="col-auto pe-0">
+                                        <p class="emotiontag">{{ emotion.tag }}</p>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    {% endif %}
+                    <td class="d-none d-md-table-cell text-center"><span class="{{ 'bi-check-lg text-primary' if record.start_time and record.stop_time else '' }}"></span></td>
+                    <td class="d-none d-sm-table-cell text-center"><span class="{{ 'bi-check-lg text-primary' if record.notes else '' }}"></span></td>
+                    {% if displayinterruptions %}
+                    <td class="d-none d-sm-table-cell text-center"><span class="{{ 'bi-check-lg text-primary' if record.session_interruptions else '' }}"></span></td>
+                    {% endif %}
+                    {% if displaygame %}
+                    <td class="col-2 text-end">
+                        <a class="text-decoration-none" href="{{ url_for('gamingdb.game', game_id=record.game.id) }}">{{ record.game.name }}</a>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endmacro %}
+
+
+{# notesTable #}
+{% macro notesTable(paginator, displaygame=True, displaysessions=True) %}
+<div id="notestable" class="row">
+    <div class="col">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th class="col-6">Content</th>
+                    <th class="d-none col-1 d-sm-table-cell text-center">Important</th>
+                    {% if displaysessions %}
+                    <th class="d-none d-sm-table-cell">Session</th>
+                    <th class="d-none d-md-table-cell col-auto text-center">Session complete</th>
+                    {% endif %}
+                    {% if displaygame %}
+                    <th class="text-end">Game</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for note in paginator %}
+                <tr>
+                    <td>
+                        <a class="text-decoration-none" href="{{ url_for('gamingdb.note', note_id=note.id) }}">
+                            {{ dateGrid(note.date_added) }}
+                        </a>
+                    </td>
+                    <td>{{ note.note|markdown }}</td>
+                    <td class="d-none d-sm-table-cell text-center">{{ checkIcon(note.important, colorfalse='secondary', iconfalse='dash') }}</td>
+                    {% if displaysessions %}
+                    <td class="d-none d-sm-table-cell">
+                        {% if note.record %}
+                        <div class="row">
+                            <div class="col">
+                                <a class="defaultlink" href="{{ url_for('gamingdb.record', record_id=note.record.id) }}">
+                                    {{ datespanGrid(note.record) }}
+                                </a>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="row">
+                            <div class="col">
+                                No session
+                            </div>
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td class="d-none d-md-table-cell col-auto text-center">
+                        {{ checkIcon(note.record.start_time and note.record.stop_time, colorfalse='secondary', iconfalse='dash') }}
+                    </td>
+                    {% endif %}
+                    {% if displaygame %}
+                    <td class="text-end">
+                        {% if note.game %}
+                        <a class="text-decoration-none" href="{{ url_for('gamingdb.game', game_id=note.game.id) }}">{{ note.game.name }}</a>
+                        {% else %}
+                        No game
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endmacro %}
+
+
+{% macro noteSessionCard(record) %}
+<div class="card h-100">
+    <div class="card-header"><h2>Session</h2></div>
+    <div class="card-body">
+        {% if record %}
+        <table class="table">
+            <tr>
+                <th>Date</th>
+                <td class="text-end">
+                    <a class="text-decoration-none" href="{{ url_for('gamingdb.record', record_id=record.id) }}">
+                        {{ datespanGrid(record) }}
+                    </a>
+                </td>
+            </tr>
+            <tr>
+                <th class="align-middle">Emotions</th>
+                <td class="text-end">{{ tagRow('emotion', record.emotions, align='end', alignempty='end') }}</td>
+            </tr>
+            <tr>
+                <th class="align-middle">Interruptions</th>
+                <td class="text-end">{{ interruptionsTagRow(record, align='end', alignempty='end') }}</td>
+            </tr>
+        </table>
+        {% else %}
+        <p class="text-center">No associated session</p>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+
+{% macro noteGameCard(game) %}
+<div class="card h-100">
+    <div class="card-header"><h2>Game</h2></div>
+    <div class="card-body">
+        {% if game %}
+        <table class="table">
+            <tr>
+                <td class="text-end"><a class="defaultlink" href="{{ url_for('gamingdb.game', game_id=game.id) }}">{{ game.name }}</a></td>
+            </tr>
+        </table>
+        {% else %}
+        <p class="text-center">No associated game</p>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+
+{% macro noteSessionDataCard(record, game) %}
+<div class="card h-100">
+    <div class="card-body">
+        <h5 class="card-title">Session</h5>
+        {% if record %}
+        <table class="table">
+            <tr>
+                <th></th>
+                <td class="text-end">
+                    <a class="text-decoration-none" href="{{ url_for('gamingdb.record', record_id=record.id) }}">
+                        {{ datespanGrid(record) }}
+                    </a>
+                </td>
+            </tr>
+            <tr>
+                <th><h6>Emotions</h6></th>
+                <td>
+                    <div class="row justify-content-end">
+                        {% for emotion in record.emotions %}
+                        <div class="col-auto"><a class="text-decoration-none" href="{{ url_for('gamingdb.emotion', emotion_id=emotion.id) }}">{{ emotion.tag }}</a></div>
+                        {% endfor %}
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <th><h6>Interruptions</h6></th>
+                <td>
+                    {{ interruptionsTagRow(record) }}
+                </td>
+            </tr>
+        </table>
+        {% else %}
+        <table class="table">
+            <tr>
+                <td>
+                    <p class="text-center">No associated session</p>
+                </td>
+            </tr>
+        </table>
+        {% endif %}
+        <h5 class="card-title">Game</h5>
+        {% if game %}
+        <table class="table">
+            <tr>
+                <th></th>
+                <td class="text-end"><a class="text-decoration-none" href="{{ url_for('gamingdb.game', game_id=game.id) }}">{{ game.name }}</a></td>
+            </tr>
+        </table>
+        {% else %}
+        <table class="table">
+            <tr>
+                <td>
+                    <p class="text-center">No associated game</p>
+                </td>
+            </tr>
+        </table>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+
+
+{% macro tagRow(tagtype, tags, align='start', alignempty='center') %}
+{% if tags %}
+<div class="row justify-content-{{ align }} g-3">
+    {% set urlstring = 'gamingdb.' + tagtype %}
+    {% for tag in tags|sort(attribute='tag') %}
+    {% set param = {tagtype + '_id': tag.id} %}
+    <div class="col-auto">
+        <a class="defaultlink" href="{{ url_for(urlstring, **param) }}">{{ tag.tag }}</a>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="row justify-content-{{ alignempty }}">
+    <div class="col-auto"><p class="defaulttag my-0">None</p></div>
+</div>
+{% endif %}
+{% endmacro %}
+
+
+
+{% macro interruptionsTagRow(record, align='end', alignempty='center') %}
+{% set ui = namespace(l=[]) %}
+{% for i in record.session_interruptions %}
+{% set ui.l = ui.l + i.tags %}
+{% endfor %}
+{{ tagRow('interruption', ui.l|unique|list, align, alignempty) }}
+{% endmacro %}
+
+
+
+{% macro ratingInfoTable() %}
+<div class="row row-cols-1 g-2 align-items-center">
+    <div class="col">0 - unrated or unrateable</div>
+    <div class="col">1 - terrible</div>
+    <div class="col">2 - okay</div>
+    <div class="col">3 - acceptable</div>
+    <div class="col">4 - excellent</div>
+</div>
+{% endmacro %}

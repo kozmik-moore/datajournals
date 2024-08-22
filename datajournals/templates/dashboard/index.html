@@ -1,0 +1,116 @@
+{% extends 'base.html'%}
+
+{% set dirmap = {
+    'Journal': {
+        'description': 'For collecting thoughts and recollections.',
+        'database': 'journaldb',
+        'subdirectory': {
+            'dashboard': url_for('journaldb.index'),
+            'Add entry': url_for('journaldb.create_record'),
+        }
+    },
+    'Sleep': {
+        'description': 'For records of sleep experiences, including interruptions.',
+        'database': 'sleepdb',
+        'subdirectory': {
+            'dashboard': url_for('sleepdb.index'),
+            'Add session': url_for('sleepdb.create_record'),
+            'Add note': url_for('sleepdb.create_note'),
+        }
+    },
+    'Gaming': {
+        'description': 'For recording data about video gaming sessions.',
+        'database': 'gamingdb',
+        'subdirectory': {
+            'dashboard': url_for('gamingdb.index'),
+            'Add session': url_for('gamingdb.create_record'),
+            'Add note': url_for('gamingdb.create_note'),
+        }
+    },
+    'Dreams': {
+        'description': 'For recording dreams and impressions of dreams.',
+        'database': 'dreamdb',
+        'subdirectory': {
+            'dashboard': url_for('dreamdb.index'),
+            'Add dream': url_for('dreamdb.create_record'),
+            'Add note': url_for('dreamdb.create_note'),
+        }
+    },
+    'Restaurants': {
+        'description': 'For recording feelings and experiences while dining out.',
+        'database': 'restaurantdb',
+        'subdirectory': {
+            'dashboard': url_for('restaurantdb.index'),
+            'Add restaurant': url_for('restaurantdb.create_record'),
+            'Add visit': url_for('restaurantdb.create_visit'),
+            'Add note': url_for('restaurantdb.create_note'),
+        }
+    },
+    'Health': {
+        'description': 'For recording events and experiences related to the physical body.',
+        'database': 'healthdb',
+        'subdirectory': {
+            'dashboard': url_for('healthdb.index'),
+            'Add record': url_for('healthdb.create_record'),
+            'Add pain record': url_for('healthdb.create_subrecord', sr_type='pain'),
+            'Add glucose record': url_for('healthdb.create_subrecord', sr_type='glucose'),
+            'Add weight record': url_for('healthdb.create_subrecord', sr_type='weight'),
+            'Add cardio record': url_for('healthdb.create_subrecord', sr_type='cardio'),
+        }
+    },
+} %}
+
+{% block title %}Directory{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col">
+        <h1>Data Journals Directory</h1>
+    </div>
+</div>
+<br>
+
+<div class="row row-cols-1 row-cols-md-2 g-4">
+    {% for i, m in dirmap.items() %}
+    {% set sd = m['subdirectory'] %}
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header text-start"><h2>{{ i }}</h2></div>
+            <div class="row g-0">
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <p class="card-text">{{ m['description'] }}</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <img src="{{ url_for('static', filename='images/%s.jpg' % m['database']) }}" class="img-fluid" alt="...">
+                </div>
+            </div>
+            <div class="card-footer text-muted text-end">
+                <div class="btn-group btn-group-sm">
+                    <a type="button" class="btn btn-primary" href="{{ sd['dashboard'] }}">Go</a>
+                    <button
+                        type="button"
+                        class="btn btn-primary dropdown-toggle dropdown-toggle-split"
+                        data-bs-toggle="dropdown"
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                    >
+                        <span class="visually-hidden">Toggle Dropdown</span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end">
+                        {% for si, e in sd.items() %}
+                        {% if si != 'dashboard' %}
+                        <a class="dropdown-item" href="{{ e }}">{{ si }}</a>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<br>
+{% endblock %}

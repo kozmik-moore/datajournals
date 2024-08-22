@@ -1,0 +1,506 @@
+{# MACRO #}
+<!-- Paginator -->
+{% macro createBasicPaginatorNavbar(databasename, view, paginator, pagenumber=True, urlfragment=None, options={}) %}
+
+{# Initialize kwargs #}
+{% if False %}{{ kwargs }}{% endif %}
+
+{# set the string used in url_for() #}
+{% if kwargs.get('urlstring') %}
+{% set urlstring = kwargs['urlstring'] %}
+{% else %}
+{% set urlstring = '%sdb.%s' % (databasename, view) %}
+{% endif %}
+
+{# set the arguments for url_for(), if supplied #}
+{% set a = {} %}
+{% if kwargs.get('page_args') %}
+{% set param = kwargs['page_args'][0] %}
+{% set arg = kwargs['page_args'][1] %}
+{% set a = dict(a, **{param:arg}) %}
+{% endif %}
+
+{% set a = dict(a, **options) %}
+
+{# set 'disabled' keywords for navigation buttons, as necessary #}
+{% set prev_disabled = '' if paginator.has_prev else 'disabled' %}
+{% set next_disabled = '' if paginator.has_next else 'disabled' %}
+
+<div class="row align-items-top">
+    <div class="col">
+        <nav aria-label="...">
+            <ul class="pagination">
+                {% set args = dict(a, **{'page': 1}) %}
+                <li class="page-item">
+                    <a class="page-link {{ prev_disabled }}" href="{{ url_for(urlstring, **args) }}{{ '#' + urlfragment if urlfragment else '' }}">
+                        <span class="d-none d-sm-inline">First</span>
+                        <span class="d-inline d-sm-none bi-chevron-bar-left"></span>
+                    </a>
+                </li>
+                {% set args = dict(a, **{'page': paginator.prev_num}) %}
+                <li class="page-item">
+                    <a class="page-link {{ prev_disabled }}" href="{{ url_for(urlstring, **args) }}{{ '#' + urlfragment if urlfragment else '' }}">
+                        <span class="d-none d-sm-inline">Prev</span>
+                        <span class="d-inline d-sm-none bi-chevron-left"></span>
+                    </a>
+                </li>
+                {% set args = dict(a, **{'page': paginator.next_num}) %}
+                <li class="page-item">
+                    <a class="page-link {{ next_disabled }}" href="{{ url_for(urlstring, **args) }}{{ '#' + urlfragment if urlfragment else '' }}">
+                        <span class="d-none d-sm-inline">Next</span>
+                        <span class="d-inline d-sm-none bi-chevron-right"></span>
+                    </a>
+                </li>
+                {% set args = dict(a, **{'page': paginator.pages}) %}
+                <li class="page-item">
+                    <a class="page-link {{ next_disabled }}" href="{{ url_for(urlstring, **args) }}{{ '#' + urlfragment if urlfragment else '' }}">
+                        <span class="d-none d-sm-inline">Last</span>
+                        <span class="d-inline d-sm-none bi-chevron-bar-right"></span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    {% if pagenumber %}
+    <div class="col-auto">
+        {% if paginator.pages %}
+        {{ paginator.page }} of {{ paginator.pages }}
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+
+{# MACRO basicPaginator
+    Given an endpoint and a pagination object, constructs a paginator.
+    Optionally, arguments can be added to the links in the paginator using the 'options' mapping.
+    Optionally, an anchor can be added.
+#}
+{% macro basicPaginator(endpoint, paginator, options={}, anchor='') %}
+
+{# set 'disabled' keywords for navigation buttons, as necessary #}
+{% set pd = '' if paginator.has_prev else 'disabled' %}
+{% set nd = '' if paginator.has_next else 'disabled' %}
+
+{% set al = '#' + anchor if anchor else '' %}
+
+<div class="row align-items-top">
+    <div class="col">
+        <nav aria-label="...">
+            <ul class="pagination">
+                {% for a, da, h, b in [
+                    ({'page': 1}, pd, 'First', 'chevron-bar-left'),
+                    ({'page': paginator.prev_num}, pd, 'Prev', 'chevron-left'),
+                    ({'page': paginator.next_num}, nd, 'Next', 'chevron-right'),
+                    ({'page': paginator.pages}, nd, 'Last', 'chevron-bar-right'),
+                ] %}
+                {% set a = dict(a, **options) %}
+                <li class="page-item">
+                    <a class="page-link {{ da }}" href="{{ url_for(endpoint, **a) }}{{ al }}">
+                        <span class="d-none d-sm-inline">{{ h }}</span>
+                        <span class="d-inline d-sm-none bi-{{ b }}"></span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </nav>
+    </div>
+    <div class="col-auto">
+        {% if paginator.pages %}
+        {{ paginator.page }} of {{ paginator.pages }}
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+
+{# MACRO #}
+<!-- Template to create a badge -->
+{% macro createBadge(text='Important', bgcolor='danger', txtcolor='light', opacity='100', style='rounded-pill', align='middle') %}
+
+{# Initialize kwargs #}
+{% if False %}{{ kwargs }}{% endif %}
+
+<span class="badge {{ style }} bg-{{ bgcolor }} text-{{ txtcolor }} opacity-{{ opacity }} align-{{ align }}">{{ text }}</span>
+
+{% endmacro %}
+
+
+{# MACRO #}
+<!-- Template to create a basic main header -->
+{% macro createBasicHeader(text, size='1') %}
+
+{# Initialize kwargs #}
+{% if False %}{{ kwargs }}{% endif %}
+
+<h{{ size }}>{{ text }}</h{{ size }}>
+
+{% endmacro %}
+
+
+{# MACRO #}
+<!-- Template to create a header with a badge -->
+{% macro createBadgedNoteHeader(text, record_obj, badgetxt='Important', size='1') %}
+
+{# Initialize kwargs #}
+{% if False %}{{ kwargs }}{% endif %}
+
+<div class="row">
+    <div class="col-auto">
+        <h{{ size }}>{{ text }}</h{{ size }}>
+    </div>
+    {% if record_obj.important %}
+    <div class="col d-flex align-items-stretch ps-0">
+        <div class="row align-items-center">
+            <div class="col">
+                {{ createBadge(text=badgetxt) }}
+                {# <span class="badge rounded-pill bg-danger align-middle">{{ badgetxt }}</span> #}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endmacro %}
+
+
+{# MACRO #}
+<!-- Template to create a basic sub header -->
+{% macro createBasicSubheader(text, size='3') %}
+
+{# Initialize kwargs #}
+{% if False %}{{ kwargs }}{% endif %}
+
+<h{{ size }}>{{ text }}</h{{ size }}>
+
+{% endmacro %}
+
+
+{# MACRO #}
+<!-- Template to create a basic info symbol for use as a button -->
+{% macro infoButton(textcolor='primary-emphasis', icon='info-circle', title='') %}
+
+{# Initialize kwargs #}
+{% if False %}{{ kwargs }}{% endif %}
+
+<span class="text-{{ textcolor }} bi-{{ icon }}" title="{{ title }}"></span>
+
+{% endmacro %}
+
+
+{# MACRO #}
+<!-- Template to create a basic check symbol -->
+{% macro checkIcon(condition, colortrue='primary', icontrue='check-lg', colorfalse='secondary', iconfalse='dash', text=None) %}
+
+{# Initialize kwargs #}
+{% if False %}{{ kwargs }}{% endif %}
+
+{% set cf = 'text-' + colorfalse if colorfalse else '' %}
+{% set icf = 'bi-' + iconfalse if colorfalse else '' %}
+{% set fs = cf + ' ' + icf %}
+{% set ts = 'text-' + colortrue + ' bi-' + icontrue %}
+
+<span class="{{ ts if condition else fs }}">{{ text if text else '' }}</span>
+
+{% endmacro %}
+
+
+{% macro dataPopover(content, placement='auto', title=None, tooltip='', button=None) %}
+<a
+    tabindex="0"
+    class="btn btn-sm"
+    data-bs-toggle="popover"
+    data-bs-trigger="focus"
+    data-bs-html="true"
+    data-bs-placement="{{ placement }}"
+    title="{{ 'Data' if title is none else title }}"
+    data-bs-content='{{ content }}'
+>
+{{ infoButton(title=tooltip) if not button else button }}
+</a>
+{% endmacro %}
+
+
+{% macro tagsCountPopover(tags, endpoint, arg, placement='auto', title=None, tooltip='', button=None) %}
+{% macro c() %}
+<div class="row row-cols-3 g-1">
+    {% for t in tags %}
+    {% set a = {arg: t[0].id} %}
+    <div class="col-7"><a class="defaultlink" href="{{ url_for(endpoint, **a) }}">{{ t[0].tag }}</a></div>
+    <div class="col-2">{{ t[1] }}</div>
+    <div class="col-3">({{ t[2] }})</div>
+    {% endfor %}
+</div>
+{% endmacro %}
+<a
+    tabindex="0"
+    class="btn btn-sm"
+    data-bs-toggle="popover"
+    data-bs-trigger="focus"
+    data-bs-html="true"
+    data-bs-placement="{{ placement }}"
+    title="{{ 'Data' if title is none else title }}"
+    data-bs-content='{{ c() }}'
+>
+{{ infoButton(title=tooltip) if not button else button }}
+</a>
+{% endmacro %}
+
+
+{% macro popoverScript() %}
+<script>
+    const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
+    const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl))
+    const popover = new bootstrap.Popover('.popover-dismiss', {
+        trigger: 'focus'
+    })
+</script>
+{% endmacro %}
+
+
+{% macro bootstrapTagsScript(allownew='true', separator='|,|') %}
+<script type="module">
+    import Tags from "https://cdn.jsdelivr.net/gh/lekoala/bootstrap5-tags@master/tags.js";
+    Tags.init("select", {separator: "{{ separator }}", addOnBlur:'true', allowNew: "{{ allownew }}", allowClear: 'true', clearEnd: 'true', showDropIcon: 'false'});
+</script>
+{% endmacro %}
+
+
+{% macro messageFlasher() %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+<!-- Categories: success (green), info (blue), warning (yellow), danger (red) -->
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{category}} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+{% endmacro %}
+
+
+{% macro dateGrid(date, monthfmt='%b', timefmt='%H:%M', dowfmt='%a', multiline=True, singlelinefmt='%b %d, %Y, %H:%M (%a)') %}
+{% if multiline %}
+<div class="row row-cols-1 g-0">
+    <div class="">{{ date.strftime(monthfmt + ' %d, %Y') }}</div>
+    <div class="">{{ date.strftime(timefmt) }}</div>
+    <div class="">{{ date.strftime(dowfmt) }}</div>
+</div>
+{% else %}
+<div class="row">
+    <div class="col">
+        {{ date.strftime(singlelinefmt) }}
+    </div>
+</div>
+{% endif %}
+{% endmacro %}
+
+
+{# MACRO timeDataModal(map, buttontext='See time data', name='', title='')
+    Given a mapping of str and tuple, constructs a modal with a table with columns for data at ranges of a week, a month, a half-year, and all time.
+#}
+{% macro timeDataModal(map, buttontext='See time data', name='', title='') %}
+{% set mid = name + 'Modal' if name else 'modal' %}
+<button
+    type="button"
+    class="btn btn-primary btn-sm"
+    data-bs-toggle="modal"
+    data-bs-target="#{{ mid }}Id"
+>
+    {{ buttontext }}
+</button>
+
+<div
+    class="modal fade"
+    id="{{ mid }}Id"
+    tabindex="-1"
+    data-bs-backdrop="static"
+    data-bs-keyboard="false"
+    
+    role="dialog"
+    aria-labelledby="{{ mid }}TitleId"
+    aria-hidden="true"
+>
+    <div
+        class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg"
+        role="document"
+    >
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="{{ mid }}TitleId">
+                    {{ title if title else 'Time data' }}
+                </h5>
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                ></button>
+            </div>
+            <div class="modal-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            {% for ch in ['', '7 days', '30 days', '180 days', 'all time'] %}
+                            <th class="text-center">{{ ch }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if map %}
+                        {% for rh, r in map.items() %}
+                        <tr>
+                            <th>{{ rh }}</th>
+                            {% for i in r %}
+                            <td class="text-center">{{ i }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+
+{# MACRO tagsCountModal
+    Given a tuple of tag models, their counts, and proportions, constructs a modal which displays them in tabular form.
+    Can optionally supply keyword args for an endpoint for links, the modal button, title, and tooltip 
+#}
+{% macro tagsCountModal(counts, endpoint=None, tagtype=None, buttonlabel=None, title=None, tooltip=None, options={}, legacy=False) %}
+{% set n = options['modalname'] if 'modalname' in options.keys() else tagtype %}
+{% set mid = n + 'ModalId' %}
+{% set mtid = n + 'ModalTitleId' %}
+<button
+    type="button"
+    class="btn btn-sm"
+    data-bs-toggle="modal"
+    data-bs-target="#{{ mid }}"
+>
+    {% if buttonlabel %}
+    {{ buttonlabel }}
+    {% else %}
+    {{ infoButton(title=tooltip) }}
+    {% endif %}
+</button>
+<div
+    class="modal fade"
+    id="{{ mid }}"
+    tabindex="-1"
+    data-bs-backdrop="static"
+    data-bs-keyboard="false"
+    
+    role="dialog"
+    aria-labelledby="{{ mtid }}"
+    aria-hidden="true"
+>
+    <div
+        class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm"
+        role="document"
+    >
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="{{ mtid }}">
+                    {{ title if title else 'Tags counts' }}
+                </h5>
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                ></button>
+            </div>
+            <div class="modal-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="text-start">Tag</th>
+                            <th>Count</th>
+                            <th>Proportion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in counts %}
+                        {% set a = {'tagtype': tagtype, 'tagid':r[0].id } %}
+                        {% if legacy %}
+                        {% set a = {tagtype + '_id': r[0].id}  %}
+                        {% endif %}
+                        {% set a = dict(a, **options) %}
+                        <tr>
+                            <th class="text-start">
+                                <a class="defaultlink" href="{{ url_for(endpoint, **a) }}">{{ r[0].tag }}</a>
+                            </th>
+                            <td>{{ r[1] }}</td>
+                            <td>{{ r[2] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal"
+                >
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+
+{# MACRO tagsRow() 
+    Given a list of tag objects, constructs rows representing the tags.
+    'endpoint' and an 'arg' are used to construct urls
+    When set to False, 'legacy' supports the new abstracted tag interface and only applies when 'endpoint' and 'arg' are supplied
+#}
+{% macro tagsRow(endpoint=None, arg=None, tags=[], align='end', alignempty='end', textcolor=None, opt={}, legacy=True) %}
+{% if tags %}
+{% if endpoint and arg %}
+<div class="row justify-content-{{ align }} g-2">
+    {% for tag in tags|sort(attribute='tag') %}
+    {% set param = {arg: tag.id} %}
+    {% if not legacy %}
+    {% set param = {'tagtype': arg, 'tagid': tag.id} %}
+    {% endif %}
+    {% set param = dict(param, **opt) %}
+    <div class="col-auto">
+        <a class="defaultlink" href="{{ url_for(endpoint, **param) }}">{{ tag.tag }}</a>
+    </div>
+    {% endfor %}
+</div>
+{% elif endpoint %}
+<div class="row justify-content-{{ align }} g-2">
+    {% for tag in tags|sort(attribute='tag') %}
+    <div class="col-auto">
+        <a class="defaultlink" href="{{ url_for(endpoint, **opt) }}">{{ tag.tag }}</a>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="row justify-content-{{ align }} g-2">
+    {% for tag in tags|sort(attribute='tag') %}
+    {% set tc = 'text-%s' % textcolor if textcolor else 'defaulttag' %}
+    <div class="col-auto">
+        <p class="m-0 {{ tc }}">{{ tag.tag }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% else %}
+<div class="row justify-content-{{ alignempty }}">
+    <div class="col-auto"><p class="defaulttag my-0">None</p></div>
+</div>
+{% endif %}
+{% endmacro %}

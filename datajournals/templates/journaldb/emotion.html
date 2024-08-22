@@ -1,0 +1,17 @@
+{% extends 'journaldb/index.html' %}
+{% from 'journaldb/macros.html' import createRecordsTable %}
+
+{% block subtitle %}Descriptor - {{ emotion.tag }}{% endblock %}
+
+{% block subcontent %}
+
+{{ taglayout(
+    databasename='journal',
+    tagtype='emotion', 
+    recordsection=createRecordsTable(pagination, tags=False, ),
+    tagobject=emotion, 
+    paginator=pagination,
+    ) 
+}}
+
+{% endblock %}

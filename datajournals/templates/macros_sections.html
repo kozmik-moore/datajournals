@@ -1,0 +1,182 @@
+<!-- MACRO -->
+<!-- Template for a section that lists tags from a tagtype, given a record -->
+{% macro createTagListSection(databasename, tagtype, record) %}
+
+{# Initialize kwargs #}
+{% if False %}{{ kwargs }}{% endif %}
+
+{% set tags = '%ss' % tagtype %}
+{% set urlstring = '%sdb.%s' % (databasename, tagtype) %}
+{% set param = '%s_id' % tagtype %}
+<div class="row d-flex justify-content-end">
+    <div class="col-auto">
+        <h5>{{ tagtype|capitalize }}s {{ kwargs.get('subsection', '') }}</h5>
+    </div>
+</div>
+<div class="row row-cols-2 row-cols-sm-auto d-flex justify-content-end">
+{% for tag in record[tags]|sort(attribute='tag.tag') %}
+{% set args = {param: tag.id} %}
+    <div class="col-auto ps-0 pb-1">
+        <a type="button" class="text-decoration-none" href="{{ url_for(urlstring, **args) }}">{{ tag.tag }}</a>
+    </div>
+{% endfor %}
+</div>
+{% endmacro %}
+
+
+<!-- MACRO -->
+<!-- Template for a section that lists unlinked tags from a tagtype, given a record -->
+{% macro unlinkedTagListSection(databasename, tagtype, record) %}
+
+{# Initialize kwargs #}
+{% if False %}{{ kwargs }}{% endif %}
+
+{% set tags = '%ss' % tagtype %}
+{% set param = '%s_id' % tagtype %}
+<div class="row d-flex justify-content-end">
+    <div class="col-auto">
+        <h5>{{ tagtype|capitalize }}s {{ kwargs.get('subsection', '') }}</h5>
+    </div>
+</div>
+<div class="row row-cols-2 row-cols-sm-auto d-flex justify-content-end">
+{% for tag in record[tags]|sort(attribute='tag.tag') %}
+{% set args = {param: tag.id} %}
+    <div class="col-auto ps-0 pb-1">
+        <p class="{{ tagtype }}tag">{{ tag.tag }}</p>
+    </div>
+{% endfor %}
+</div>
+{% endmacro %}
+
+
+<!-- MACRO -->
+<!-- Template to create a record section -->
+{% macro createBasicRecordSection(record) %}
+
+{# Initialize kwargs #}
+{% if False %}{{ kwargs }}{% endif %}
+
+<p>{{ record.record|markdown }}</p>
+
+{% endmacro %}
+
+
+{# MACRO #}
+{# Template for the nav section of a pseudo-db index page #}
+{# Must supply a string for databasename and/or a buttonsection, and a tuple or list of strings and urls for navsection or the navsection iteself. #}
+{% macro indexNavSection(
+    databasename,
+    navlinks,
+    navsection=None,
+    buttonsection=None
+) %}
+
+<div class="'container">
+    <div class="row justify-content-between">
+        {% if navsection %}
+        {{ navsection }}
+        {% else %}
+        <div class="col">
+            <nav class="nav">
+                <div class="row row-cols-3 row-cols-md-auto">
+                    {% for item in navlinks %}
+                    <a class="nav-link" href="{{ item[1] }}">{{ item[0] }}</a>
+                    {% endfor %}
+                </div>
+            </nav>
+        </div>
+        {% endif %}
+        {% if buttonsection %}
+        {{ buttonsection }}
+        {% else %}
+        <div class="col-auto d-flex align-items-end align-items-md-center">
+            <a type="button" class="btn btn-primary btn-sm" href="{{ url_for(databasename + 'db.create_record')}}">Add Record</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<hr>
+
+{% endmacro %}
+
+
+{# MACRO navDiv
+    Given two maps, constructs the headers for the index page and every page that inherits its content block.
+    The first map should be strings to either strings or maps, which should, themselves, be strings to strings.
+    The seconds map should be strings to strings.
+
+    The keys respresent labels, and the values (when strings) respresent URLs.
+    
+#}
+{% macro navDiv(navlinks, buttonlinks) %}
+<div class="row g-2 align-items-center justify-content-between">
+    <div class="col-6">
+        <nav class="navbar navbar-expand-md">
+            <div class="container-fluid px-0 mx-0">
+                <button class="btn btn-sm btn-primary d-inline d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#indexNav" aria-expanded="false" style="--bs-focus-ring-width: .15rem;">
+                    <span class="bi bi-compass"> Navigate</span>
+                </button>
+                <div class="collapse navbar-collapse" id="indexNav">
+                    <ul class="navbar-nav">
+                        {% for h, u in navlinks.items() %}
+                        {% if u is not string %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-primary-emphasis" role="button" data-bs-toggle="dropdown">{{ h }}</a>
+                            <ul class="dropdown-menu">
+                                {% for sh, su in u.items() %}
+                                <li>
+                                    <a class="dropdown-item" href="{{ su }}">{{ sh }}</a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                        {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link text-primary-emphasis" href="{{ u }}">{{ h }}</a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </div>
+    <div class="col-6 col-md-auto d-none d-md-grid">
+        <div class="row g-2">
+            {% for h, u in buttonlinks.items() %}
+            <div class="col-auto align-items-end">
+                <a class="btn btn-sm btn-primary" href="{{ u }}">{{ h }}</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="col-auto d-grid d-md-none">
+        {% if buttonlinks|length == 1 %}
+        {% for h, u in buttonlinks.items() %}
+        <a class="btn btn-sm btn-primary" href="{{ u }}">{{ h }}</a>
+        {% endfor %}
+        {% else %}
+        <div class="dropdown">
+            <button
+                class="btn btn-primary btn-sm dropdown-toggle"
+                type="button"
+                id="indexAdd"
+                data-bs-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+            >
+                Add
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                {% for h, u in buttonlinks.items() %}
+                <a class="dropdown-item" href="{{ u }}">{{ h }}</a>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+<hr>
+
+{% endmacro %}

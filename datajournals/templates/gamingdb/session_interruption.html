@@ -1,0 +1,89 @@
+{% extends 'gamingdb/index.html' %}
+{% from 'gamingdb/macros.html' import stringify_datespan, stringify_timespan, noteSessionDataCard, tagRow, noteSessionCard, noteGameCard %}
+
+{% block subtitle %}Session interruption{% endblock %}
+
+{% block subcontent %}
+<div class="row justify-content-between align-items-top align-items-sm-center">
+    <div class="col-6">
+        <h1>Session interruption <span class="{{ 'text-secondary bi-hourglass-split' if not session_interruption.duration else '' }}"></span></h1>
+    </div>
+    <div class="col-auto d-none d-sm-block">
+        {% if not session_interruption.stop_time %}
+        {% set urlstring = url_for('gamingdb.quickupdate_session_interruption', session_interruption_id=session_interruption.id) %}
+        <a type="button" class="btn btn-sm btn-primary" onclick="setTime('{{ urlstring }}')">set stop time</a>
+        {% endif %}
+        <a type="button" class="btn btn-sm btn-primary ms-2" href="{{ url_for('gamingdb.update_session_interruption', session_interruption_id=session_interruption.id) }}">edit</a>
+    </div>
+    <div class="col-auto d-block d-sm-none">
+        <div class="dropdown">
+            <button
+                class="btn btn-primary btn-sm dropdown-toggle"
+                type="button"
+                id="triggerId"
+                data-bs-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+            >
+                options
+            </button>
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="triggerId">
+                {% if not session_interruption.stop_time %}
+                {% set urlstring = url_for('gamingdb.quickupdate_session_interruption', session_interruption_id=session_interruption.id) %}
+                <a type="button" class="dropdown-item" onclick="setTime('{{ urlstring }}')">set stop time</a>
+                {% endif %}
+                <a type="button" class="dropdown-item" href="{{ url_for('gamingdb.update_session_interruption', session_interruption_id=session_interruption.id) }}">edit</a>
+            </div>
+        </div>
+        
+    </div>
+</div>
+<br>
+
+<div class="row row-cols-1 row-cols-sm-2 g-4">
+    <!-- Session interruption data -->
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header"><h2>Details</h2></div>
+            <div class="card-body">
+                <table class="table">
+                    {% set ds = stringify_datespan(session_interruption, dowenabled=False) if session_interruption.start_time else 'No start date available' %}
+                    {% set ts = stringify_datespan(session_interruption) if session_interruption.start_time else 'No start time available' %}
+                    {% for h, d in [
+                        ('Reasons' if session_interruption.tags|length != 1 else 'Reason', tagRow('interruption', session_interruption.tags, align='end')),
+                        ('Date', ds),
+                        ('Time', ts)
+                    ] %}
+                    <tr>
+                        <th>{{ h }}</th>
+                        <td class="text-end">{{ d }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="row row-cols-1 g-4">
+            {% for c in [
+                noteSessionCard(session_interruption.record),
+                noteGameCard(session_interruption.record.game)
+            ] %}
+            <div class="col">{{ c }}</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+    function setTime(doc){
+        var d = new Date();
+        var time = d.getTime() / 1000;
+        var newdoc = doc + '?time=' + time;
+        window.location.assign(newdoc);
+        return true;
+    }
+</script>
+
+
+{% endblock %}

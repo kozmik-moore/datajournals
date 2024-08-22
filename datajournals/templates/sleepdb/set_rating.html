@@ -1,0 +1,80 @@
+{% extends 'sleepdb/index.html' %}
+{% from 'sleepdb/macros.html' import sessionCard, sleepRatingInfoTable %}
+
+{% block subtitle %}Set rating{% endblock %}
+
+{% block subcontent %}
+
+{% macro ratingPopover() %}
+<div class="row g-0 align-items-center">
+    <div class="col-auto">Rating</div>
+    <div class="col-auto">
+        <a
+            tabindex="0"
+            class="btn btn-sm"
+            data-bs-toggle="popover"
+            data-bs-trigger="focus"
+            data-bs-html="true"
+            title="Scale"
+            data-bs-content='{{ sleepRatingInfoTable() }}'
+        >
+            <span class="text-primary-emphasis bi-info-circle mb-0"></span>
+        </a>
+    </div>
+</div>
+{% endmacro %}
+
+<div class="row">
+    <div class="col">
+        <h1>Set rating</h1>
+    </div>
+</div>
+<br>
+
+{{ bootstrapTagsScript() }}
+
+<form action="" method="post">
+    {{ form.csrf_token }}
+
+    <div class="row row-cols-1 row-cols-sm-2 g-4">
+        <div class="col">
+            <div class="row row-cols-1 g-2">
+                <div class="col">
+                    <div class="row row-col-2 g-2">
+                        {% for l, fn, p in [
+                            (ratingPopover(), 'rating', 'From 0 to 4'),
+                            ('Emotions', 'emotions', 'Emotions on waking...'),
+                            ('Sensations', 'sensations', 'Sensations on waking...'),
+                        ] %}
+                        <div class="col-4">{{ l }}</div>
+                        <div class="col-8">{{ form[fn](class='form-control', placeholder=p) }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="row row-col-2 g-2 mt-2">
+                        <div class="col-auto">
+                            {{ form.submit(class='btn btn-primary') }}
+                        </div>
+                        <div class="col-auto">
+                            <a type="button" class="btn btn-primary" href="{{ url_for('sleepdb.record', record_id=record.id) }}">Cancel</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            {{ sessionCard(record) }}        
+        </div>
+    </div>
+    <br>
+
+    <script>
+        const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
+        const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl))
+        const popover = new bootstrap.Popover('.popover-dismiss', {
+            trigger: 'focus'
+        })
+    </script>
+</form>
+{% endblock %}

@@ -1,0 +1,278 @@
+{% extends 'healthdb/index.html' %}
+
+{% block subtitle %}Record{% endblock %}
+
+{# Template for subrecords section #}
+{% macro createSubrecordSection() %}
+{% if record.glucose_record %}
+<div class="row">
+    <div class="col-auto">
+        <h2>Glucose</h2>
+    </div>
+</div>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Measure</th>
+            <th>Units</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>{{ record.glucose_record[0].measure }}</td>
+            <td>{{ record.glucose_record[0].units }}</td>
+        </tr>
+    </tbody>
+</table>
+{% endif %}
+{% if record.cardio_record %}
+<div class="row">
+    <div class="col-auto">
+        <h2>Cardio</h2>
+    </div>
+</div>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Systolic</th>
+            <th>Diastolic</th>
+            <th>Heart Rate</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>{{ record.cardio_record[0].systolic }}</td>
+            <td>{{ record.cardio_record[0].diastolic }}</td>
+            <td>{{ record.cardio_record[0].heart_rate }}</td>
+        </tr>
+    </tbody>
+</table>
+{% endif %}
+{% if record.pain_record %}
+<div class="row">
+    <div class="col-auto">
+        <h2>Pain</h2>
+    </div>
+</div>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Level</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>{{ record.pain_record[0].level }}</td>
+            <td>{{ record.pain_record[0].description|markdown }}</td>
+        </tr>
+    </tbody>
+</table>
+{% endif %}
+{% if record.weight_record %}
+<div class="row">
+    <div class="col-auto">
+        <h2>Weight</h2>
+    </div>
+</div>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Measure</th>
+            <th>Units</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>{{ record.weight_record[0].measure }}</td>
+            <td>{{ record.weight_record[0].units }}</td>
+        </tr>
+    </tbody>
+</table>
+{% endif %}
+{% endmacro %}
+
+{# Template for main header section #}
+{% macro createMainHeader() %}
+<div class="row">
+    <div class="col">
+        <h1>{{ record.record_date.strftime('%A, %B %d, %Y') }}</h1>
+    </div>
+</div>
+<div class="row">
+    <div class="col-auto">
+        <h2>{{ record.record_date.strftime('%H:%M') }}</h2>
+    </div>
+</div>
+<div class="row">
+    {% if record.is_tracked %}
+    <div class="col">
+                {{ badge(text='Tracked') }}
+    </div>
+    {% endif %}
+</div>
+<br>
+{% endmacro %}
+
+{# Template for the tag section #}
+{% macro createTagSection() %}
+{{ tagssection('health', 'descriptor', record) }}
+{{ tagssection('health', 'emotion', record) }}
+{% endmacro %}
+
+{# Template for the button header #}
+{% macro createButtonHeader() %}
+<div class="col-auto">
+    <h1><a type="button" class="btn btn-secondary" href="{{ url_for('healthdb.update_record', record_id=record.id) }}">edit</a></h1>
+</div>
+<div class="col-auto ps-0">
+    <h1><a type="button" class="btn btn-secondary" href="{{ url_for('healthdb.create_record', parent_id=record.id) }}">link record</a></h1>
+</div>
+<div class="col-auto ps-0">
+    <h1><a type="button" class="btn btn-secondary" href="{{ url_for('healthdb.create_note', record_id=record.id) }}">add note</a></h1>
+</div>
+{% endmacro %}
+
+{% block subcontent %}
+{{ recordlayout(
+    databasename='health',
+    record=record,
+    paginator=paginator,
+    mainheader=createMainHeader(),
+    buttonheader=createButtonHeader(),
+    recordsection=basicrecordsection(record),
+    tagsection=createTagSection(),
+    datasection=createSubrecordSection()
+) }}
+<br>
+{# place notes section after or next to links and attachments #}
+<!-- Linked records -->
+<div class="row">
+    <div class="col">
+        <div class="row">
+            <div class="col">
+                <h2>Links</h2>
+            </div>
+        </div>
+        <br>
+
+        {% if record.children or record.parent %}
+        <div class="row">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if record.parent %}
+                    <tr>
+                        <td>
+                            {{ record.parent.record }}
+                        </td>
+                        <td>
+                            <a class="text-decoration-none" href="{{ url_for('healthdb.record', record_id=record.parent.id) }}">view parent</a>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% if record.children %}
+                    {% for child in record.children|sort(attribute='record_date') %}
+                    <tr>
+                        <td>
+                            {{ child.record }}
+                        </td>
+                        <td>
+                            <a class="text-decoration-none" href="{{ url_for('healthdb.record', record_id=child.id) }}">view child</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        
+        <div class="container-fluid">
+            <div class="row justify-content-center">
+                <div class="col-auto">
+                    No Links
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Attachments -->
+    <div class="col">
+        <div class="row">
+            <div class="col">
+                <h2>Attachments</h2>
+            </div>
+        </div>
+        <br>
+        
+        {% if record.attachments %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for attachment in record.attachments|sort(attribute='filename') %}
+                <tr>
+                    <td>
+                        <div class="row">
+                            {{ attachment.filename }}
+                        </div>
+                    </td>
+                    <td>
+                        {# <div class="row justify-content-end">
+                            <div class="col-auto">
+                                <a class="btn btn-link text-decoration-none" href="{{ url_for('healthdb.download_attachment', attachment_id=attachment.id) }}">download</a>
+                            </div>
+                        </div> #}
+                        <div class="dropdown">
+                            <a class="btn btn-link text-decoration-none" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                              download
+                            </a>
+                          
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                                <li><a class="dropdown-item" href="{{ url_for('healthdb.download_attachment', attachment_id=attachment.id) }}">save to device</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('healthdb.download_attachment', attachment_id=attachment.id, browser=True) }}">view in browser</a></li>
+                            </ul>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="row justify-content-end">
+                            <div class="col-auto ps-0">
+                                <!-- <a class="text-decoration-none" href="{{ url_for('healthdb.delete_attachment', attachment_id=attachment.id) }}">delete</a> -->
+                                <form method="POST" action="{{ url_for('healthdb.delete_attachment', attachment_id=attachment.id) }}">
+                                    <input type="submit" class="btn btn-link text-decoration-none text-italic" value="delete" onclick="return confirm('Are you sure you want to delete this attachment?')">
+                                </form>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        
+        <div class="container-fluid">
+            <div class="row justify-content-center">
+                <div class="col-auto">
+                    No Attachments
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+<br>
+
+{% endblock %}

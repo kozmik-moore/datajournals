@@ -1,0 +1,168 @@
+{% extends 'sleepdb/index.html' %}
+{% from 'sleepdb/macros.html' import daterange_stringify, timerange_stringify, dowrange_stringify, tagRow, interruptionsTagRow %}
+
+{% block subtitle %}{{ 'Add' if request.endpoint == 'sleepdb.add_interruption' else 'Edit' }} interruption{% endblock %}
+
+{% block subcontent %}
+
+{% macro clockSetter(label) %}
+{% set sf = 'set%sTime()' % label %}
+{% set rf = 'reset%sTime()' % label %}
+<div class="dropdown open">
+    <a
+        class="btn btn-sm dropdown-toggle text-primary"
+        type="button"
+        id="triggerId"
+        data-bs-toggle="dropdown"
+        aria-haspopup="true"
+        aria-expanded="false"
+    >
+        <span class="bi-clock"></span>
+    </a>
+    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="triggerId">
+        <a type="button" class="dropdown-item" onclick="{{ sf }}">Set time</a>
+        <a type="button" class="dropdown-item" onclick="{{ rf }}">Reset time</a>
+    </div>
+</div>
+
+{% endmacro %}
+
+<div class="row">
+    <div class="col">
+        <h1>{{ 'Add' if request.endpoint == 'sleepdb.add_interruption' else 'Edit' }} sleep interruption</h1>
+    </div>
+</div>
+<br>
+
+<script type="module">
+    import Tags from "https://cdn.jsdelivr.net/gh/lekoala/bootstrap5-tags@master/tags.js";
+    Tags.init("select", {separator: '|,|', addOnBlur:'true', allowNew: 'true', allowClear: 'false'});
+</script>
+
+<form method="POST" action="">
+    {{ form.csrf_token }}
+
+    <!-- Hidden field containing record id -->
+    {{ form.record_id }}
+
+    <div class="row row-cols-1 row-cols-sm-2 g-4 gy-2">
+        <div class="col">
+            <!-- Times and duration -->
+            <div class="row row-cols-1 g-1">
+                {% for c, l, ff, p, fl in [
+                    ('Start time', form.start.label, form.start, 'Time sleep interrupted...', 'Start'),
+                    ('Stop time', form.stop.label, form.stop, 'Time interruption ended...', 'Stop'),
+                    ] %}
+                <!-- {{ c }} -->
+                <div class="col">
+                    <div class="row align-items-center justify-content-between">
+                        <div class="col-auto">{{ l(class='form-label m-0') }}</div>
+                        <div class="col-auto">{{ clockSetter(fl) }}</div>
+                    </div>
+                </div>
+                <div class="col">{{ ff(class='form-control', placeholder=p) }}</div>
+                {% endfor %}
+                {% for c, l, ff, p in [
+                    ('Duration', form.duration.label, form.duration, 'Duration of interruption...'),
+                    ('Interruption tags', form.interruption.label, form.interruption, 'Cause(s) of interruption...'),
+                    ] %}
+                <!-- {{ c }} -->
+                <div class="col">{{ l(class='form-label m-0') }}</div>
+                <div class="col">{{ ff(class='form-control', placeholder=p) }}</div>
+                {% endfor %}
+            </div>
+            <br>
+
+            {% for c, ff, l in [
+                ('"Add another interruption" check', form.add_interruption, form.add_interruption.label),
+                ('"Add a note" check', form.add_note, form.add_note.label),
+                ] %}
+            <!-- {{ c }} -->
+            <div class="row row-cols-2 g-2">
+                <div class="col-auto">{{ ff(class='form-check-input') }}</div>
+                <div class="col-auto">{{ l(class='form-check-label') }}</div>
+            </div>
+            {% endfor %}
+            <br>
+        
+            {% set r = record if record else interruption.record %}
+            <!-- Submit and cancel buttons -->
+            <div class="row g-2">
+                <div class="col-auto">{{ form.submit(class="btn btn-primary") }}</div>
+                <div class="col-auto">
+                    <a type="button" class="btn btn-primary" href="{{ url_for('sleepdb.record', record_id=r.id) }}">Cancel</a>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h2>Session details</h2>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <tr>
+                            <th class="align-middle">Date</th>
+                            <td class="text-end">
+                                <div class="row justify-content-end">
+                                    <div class="col-auto">{{ daterange_stringify(r) }}</div>
+                                </div>
+                                <div class="row justify-content-end">
+                                    <div class="col-auto">{{ timerange_stringify(r) }}</div>
+                                </div>
+                                <div class="row justify-content-end">
+                                    <div class="col-auto">{{ dowrange_stringify(r) }}</div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% for tt, tobj in {
+                            'sensation': r.sensations, 
+                            'emotion': r.emotions, 
+                            'location': r.locations,
+                        }.items() %}
+                        <tr>
+                            <th class="align-middle">{{ tt|capitalize }}s</th>
+                            <td class="text-end">{{ tagRow(tt, tobj, align='end', alignempty='end') }}</td>
+                        </tr>
+                        {% endfor %}
+                        <tr>
+                            <th class="align-middle">Interruptions</th>
+                            <td class="text-end">{{ interruptionsTagRow(r) }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+<br>
+
+<script src="{{ url_for('static', filename='datefunctions.js') }}"></script>
+{% if request.endpoint == 'sleepdb.add_interruption' %}
+<script>
+    setDatetime('start')
+</script>
+{% endif %}
+<script>
+
+    function resetDuration(){
+        document.getElementById('duration').value = ''
+    }
+
+    function setStartTime(){
+        setDatetime('start')
+    }
+
+    function resetStartTime(){
+        resetDatetime('start')
+    }
+
+    function setStopTime(){
+        setDatetime('stop')
+    }
+
+    function resetStopTime(){
+        resetDatetime('stop')
+    }
+</script>
+{% endblock %}

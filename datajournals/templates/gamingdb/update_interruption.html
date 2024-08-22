@@ -1,0 +1,44 @@
+{% extends 'gamingdb/index.html' %}
+
+{% block subtitle %}Edit tag{% endblock %}
+
+{% block subcontent %}
+
+<div class="row">
+    <div class="col">
+        <h1>Edit tag: {{ interruption.tag }}</h1>
+    </div>
+</div>
+
+{% with messages=get_flashed_messages(with_categories=True) %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endfor %}
+{% endwith %}
+
+<br>
+
+<form method="post" action="">
+    {{ form.csrf_token }}
+
+    <div class="row">
+        <div class="col-md-6">
+            {{ form.tag(class='form-control', placeholder='My session was interrupted by...') }}
+        </div>
+    </div>
+
+    <br>
+
+    <!-- Submit/cancel buttons -->
+    <div class="row">
+        <div class="col-auto pe-1">{{ form.submit(class="btn btn-primary") }}</div>
+        <div class="col-auto px-0">
+            <a type="button" class="btn btn-primary" href="{{ url_for('gamingdb.interruption', interruption_id=interruption.id) }}">Cancel</a>
+        </div>
+    </div>
+
+</form>
+{% endblock %}

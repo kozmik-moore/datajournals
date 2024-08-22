@@ -1,0 +1,139 @@
+{% from 'macros_pages.html' import 
+    createRecordPage as recordlayout,
+    createRecordsPage as recordslayout,
+    createTagPage as taglayout,
+    createTagsPage as tagslayout,
+    createNotePage as notelayout,
+    createNotesPage as noteslayout,
+    noteCreationPage as createnotelayout,
+    noteUpdatePage as updatenotelayout
+    %}
+{% from 'macros_components.html' import 
+    createBasicPaginatorNavbar as basicpaginator,
+    createBadge as badge,
+    createBasicHeader as basicheader,
+    createBasicSubheader as basicsubheader,
+    createBadgedNoteHeader as badgedheader,
+    infoButton,
+    checkIcon,
+    popoverScript,
+    bootstrapTagsScript,
+    dataPopover,
+    tagsCountPopover,
+    messageFlasher,
+    timeDataModal,
+    dateGrid,
+    tagsRow,
+    basicPaginator,
+    tagsCountModal
+    %}
+{% from 'macros_sections.html' import 
+    createTagListSection as tagssection,
+    createBasicRecordSection as basicrecordsection,
+    indexNavSection as navsection,
+    navDiv
+    %}
+
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %} {% endblock %} - data.roselandblue.com</title>
+
+    {# <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5/dist/css/bootstrap.min.css" rel="stylesheet" /> --> #}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='bluerose_data.ico') }}">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {# <script src="{{ url_for('static', filename='datefunctions.js') }}" type="text/javascript"></script> #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+</head>
+
+<body>
+    <div class="container-lg g-0">
+        {% block navbar %}
+        <nav class="navbar navbar-expand-lg bg-dark-subtle">
+            <div class="container-fluid">
+                
+                {# navbar brand #}
+                {# <a class="navbar-brand" href="{{ url_for('dashboard.index')}}"><img src="{{ url_for('static', filename='bluerose_data_48.png') }}" alt=""></a> #}
+
+                {# navbar toggler #}
+                {% set endpoint = request.endpoint %}
+                {% set currentpage = 
+                    'dashboard' if 'dashboard' in endpoint else
+                    'journaldb' if 'journaldb' in endpoint else
+                    'sleepdb' if 'sleepdb' in endpoint else
+                    'gamingdb' if 'gamingdb' in endpoint else
+                    'dreamdb' if 'dreamdb' in endpoint else
+                    'restaurantdb' if 'restaurantdb' in endpoint else
+                    'healthdb' if 'healthdb' in endpoint else
+                    'fitnessdb' if 'fitnessdb' in endpoint else
+                    'dogactivitydb' if 'dogactivitydb' in endpoint else
+                    'auth' if 'auth' in endpoint
+                    %}
+                <button class="navbar-toggler rounded-1 ps-1 focus-ring" type="button" data-bs-toggle="collapse" data-bs-target="#navbarBase" aria-controls="navbarBase" aria-expanded="false" aria-label="Toggle navigation" style="--bs-focus-ring-width: .15rem;">
+                    <div class="row g-1">
+                        <div class="col-auto"><span class="bi-list"></span></div>
+                        {% set pagetogglerdisplay = 'auth' if currentpage == 'auth' else 'dog activities' if currentpage == 'dogactivitydb' else currentpage[0:-2] if currentpage != 'dashboard' else 'Directory' %}
+                        <div class="col-auto">{{ pagetogglerdisplay|capitalize }}{{ 's' if currentpage in ['dreamdb', 'restaurantdb'] }}</div>
+                    </div>
+                </button>
+
+                {# navbar collapse #}
+                <div class="collapse navbar-collapse" id="navbarBase">
+                    <div class="navbar-nav">
+                        {% for s, l, u, d in (
+                            ['dashboard', 'Directory', url_for('dashboard.index'), ''],
+                            ['journaldb', 'Journal', url_for('journaldb.index'), ''],
+                            ['sleepdb', 'Sleep', url_for('sleepdb.index'), ''],
+                            ['gamingdb', 'Gaming', url_for('gamingdb.index'), ''],
+                            ['dreamdb', 'Dreams', url_for('dreamdb.index'), ''],
+                            ['restaurantdb', 'Restaurants', url_for('restaurantdb.index'), ''],
+                            ['healthdb', 'Health', url_for('healthdb.index'), ''],
+                            ) 
+                        %}
+                        <a class="nav-item nav-link {{ 'text-primary border border-3 border-primary rounded-1 px-1 px-sm-2 py-1' if s == currentpage else '' }}{{ d }}" style="--bs-border-opacity: .20;" href="{{ u }}">{{ l }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="row">
+                    {# <div class="col-auto">
+                        <a class="navbar-brand" href="{{ url_for('dashboard.index')}}"><img src="{{ url_for('static', filename='bluerose_data_48.png') }}" alt=""></a>
+                    </div> #}
+        
+                    {# login control #}
+                    <div class="col-auto">
+                    {% if current_user.is_authenticated %}
+                        <a class="btn btn-primary btn-sm" href="{{ url_for('authorization.logout') }}">
+                            <div class="row g-0">
+                                <div class="col-auto">Log out</div>
+                                <div class="col-auto d-none d-sm-block">: {{ current_user.username }}</div>
+                            </div>
+                        </a>
+                    {% else %}
+                        <a class="btn btn-primary btn-sm" href="{{ url_for('authorization.login') }}">Log in</a>
+                    {% endif %}
+                    </div>
+                </div>
+            </div>
+        </nav>
+        {% endblock %}
+
+
+        <br>
+        <div class="container-fluid">
+            <div class="content">
+                {% block content %} {% endblock %}
+            </div>
+        </div>
+
+        {# <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script> -->
+        <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5/dist/js/bootstrap.bundle.min.js" type="module"></script> --> #}
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{% extends 'healthdb/index.html' %}
+{% from 'healthdb/macros.html' import createRecordsTable %}
+
+{% block subtitle %}Emotion: emotion.tag{% endblock %}
+
+{% block subcontent %}
+{{ taglayout(
+    databasename='health',
+    tagtype='emotion',
+    tagobject=emotion,
+    paginator=paginator,
+    recordsection=createRecordsTable(paginator, typecol=False)
+) }}
+{% endblock %}

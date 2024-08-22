@@ -1,0 +1,212 @@
+{# Create record types section #}
+{% macro createRecordTypesSection(record, add_links=False) %}
+{% set records_list = [(record['glucose_record'], 'glucose'),
+                        (record['cardio_record'], 'cardio'), 
+                        (record['pain_record'], 'pain'), 
+                        (record['weight_record'], 'weight')] %}
+{% set type_list = [] %}
+{% for mapping in records_list %}
+{% if mapping[0] %}
+{% do type_list.append(mapping) %} {# imported extension to support "do" tag #}
+{% endif %}
+{% endfor %}
+{% if not type_list %}
+general
+{% else %}
+{# Edit this to insert slashes between links/text #}
+{% for type_ in type_list %}
+{% set urlstring = 'healthdb.' + type_[1] %}
+{% set kwargs = {type_[1] + '_id': type_[0][0].id} %}
+{% if add_links %}
+<a class="text-decoration-none" href="{{ url_for(urlstring, **kwargs) }}">{{ type_[1] }}</a>
+{% else %}
+{{ type_[1] }}
+{% endif %}
+{{ '' if type_ == type_list[-1] else '/' }}
+{% endfor %}
+{% endif %}
+{% endmacro %}
+
+{# Create the records table #}
+{% macro createRecordsTable(paginator, 
+    badges=True, 
+    tags=True, 
+    datecol=True, 
+    typecol=False, 
+    recordtemplate=None) %}
+{% from 'macros_components.html' import createBadge %}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">Record</th>
+            {% if datecol %}
+            <th scope="col">Date</th>
+            {% endif %}
+            {% if typecol %}
+            <th scope="col">Record type</th>
+            {% endif %}
+            <th></th>
+        </tr>
+    </thead>
+    {% for record in paginator %}
+    <tr>
+        <tr>
+            <td>
+                <div class="row">
+                    <div class="col">
+                    {% if recordtemplate %}
+                    {{ recordtemplate(record) }}
+                    {% elif record.record|length > 200 %}
+                        {{ record.record[:200]|markdown }}...
+                    {% else %}
+                        {{ record.record|markdown }}
+                    {% endif %}
+                    </div>
+                </div>
+                {% if badges %}
+                <div class="row pb-1">
+                    {% for type in ['children', 'parent', 'attachments'] %}
+                    {% if record[type] %}
+                    <div class="col-auto pe-0">
+                        {{ createBadge(text=(type if type =='attachments' else 'parent' if type == 'children' else 'child')|capitalize, 
+                        bgcolor='info', 
+                        txtcolor='dark', 
+                        opacity='100') 
+                    }}
+                    </div>
+                    {% endif %}
+                    {%endfor%}
+                    {% for type in ['glucose_record', 'cardio_record', 'pain_record', 'weight_record'] %}
+                    {% if record[type] %}
+                    <div class="col-auto pe-0">
+                        {{ createBadge(text=type|replace('_', ' '), bgcolor='success', txtcolor='light', opacity='100') }}
+                    </div>
+                    {% endif %}
+                    {%endfor%}
+                    {% if record.is_tracked %}
+                    <div class="col-auto pe-0">
+                        {{ createBadge(text='Tracked', bgcolor='danger') }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% if tags %}
+                <div class="row pb-1">
+                    {% for descriptor in record.descriptors %}
+                        <div class="col-auto pe-1 py-1">
+                            <a class="text-primary text-decoration-none" href="{{ url_for('healthdb.descriptor', descriptor_id=descriptor.id) }}">{{ descriptor.tag }}</a>
+                        </div>
+                    {% endfor %}
+                    {% for emotion in record.emotions %}
+                        <div class="col-auto pe-1 py-1">
+                            <a class="text-primary text-decoration-none" href="{{ url_for('healthdb.emotion', emotion_id=emotion.id) }}">{{ emotion.tag }}</a>
+                        </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </td>
+            {% if datecol %}
+            <td>
+                <div class="row">
+                    <div class="col-auto">
+                        {{ record.record_date.strftime('%a, %b %d, %Y %H:%M') }}
+                    </div>
+                </div>
+            </td>
+            {% endif %}
+            {% if typecol %}
+            <td>
+                <div class="row">
+                    <div class="col-auto">
+                        {{ createRecordTypesSection(record) }}
+                    </div>
+                </div>
+            </td>
+            {% endif %}
+            <td>
+                <div class="row">
+                    <div class="col-auto">
+                        <a class="text-decoration-none" href="{{ url_for('healthdb.record', record_id=record.id) }}">view</a>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </tr>
+    {% endfor %}
+</table>
+<br>
+
+{% endmacro %}
+
+
+{# Template to create subrecord pages #}
+{% macro createSubrecordLayout( 
+    recordtype, 
+    databasename='health',
+    paginator=None,
+    headersection=None,
+    datasection=None,
+    recordtemplate=None,
+    pagesection=None,
+    count=None,
+    disablecount=False
+    ) %}
+
+{% from 'macros_components.html' import createBasicPaginatorNavbar %}
+
+{# Initialize kwargs #}
+{% if False %}{{ kwargs }}{% endif %}
+
+<!-- Header -->
+<div class="row justify-content-between">
+    <div class="col-auto">
+        {% if headersection %}
+        {{ headersection }}
+        {% else %}
+        <h1>{{ recordtype|capitalize + ' records' }}</h1>
+        {% endif %}
+    </div>
+    <div class="col-auto">
+        {% if buttonsection %}
+        {{ buttonsection }}
+        {% else %}
+        {% set urlstring = '%sdb.create_subrecord' % databasename %}
+        {% set param = {'sr_type': recordtype} %}
+        <div class="col-auto">
+            <h1><a type="button" class="btn btn-primary" href="{{ url_for(urlstring, sr_type=recordtype) }}">Quick Record</a></h1>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Records count -->
+{% if not disablecount and count %}
+<div class="row">
+    <div class="col">
+        <h3>{{ count }} record{{ 's' if count != 1 else '' }}</h3>
+    </div>
+</div>
+{% endif %}
+<br>
+
+<!-- Data section -->
+{% if datasection %}
+{{ datasection }}
+{% endif %}
+
+<!-- Records -->
+{% if recordtemplate %}
+{{ createRecordsTable(paginator, recordtemplate=recordtemplate) }}
+{% else %}
+{{ createRecordsTable(paginator) }}
+{% endif %}
+
+{% if pagesection %}
+{{ pagesection }}
+{% else %}
+<!-- Records Pagination Navbar -->
+{{ createBasicPaginatorNavbar(databasename, recordtype, paginator) }}
+{% endif %}
+
+{% endmacro %}

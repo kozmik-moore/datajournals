@@ -1,0 +1,45 @@
+{% extends 'dreamdb/index.html' %}
+{% from 'dreamdb/macros.html' import dreamCard %}
+
+{% block subtitle %}Note{% endblock %}
+
+{% block subcontent %}
+
+<div class="row align-items-center justify-content-between">
+    <div class="col"><h1>Note</h1></div>
+    <div class="col-auto">
+        <a class="btn btn-sm btn-primary" href="{{ url_for('dreamdb.update_note', note_id=note.id) }}">edit</a>
+    </div>
+</div>
+<br>
+
+<div class="row row-cols-1 row-cols-md-2 g-4">
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header">
+                <h2>Details</h2>
+            </div>
+            <div class="card-body">
+                <p class="m-0">{{ note.note|markdown }}</p>
+                <table class="table">
+                    <tr>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                    <tr>
+                        <th>Date added</th>
+                        <td class="text-end">{{ dateGrid(note.date_added) }}</td>
+                    </tr>
+                </tr>
+                <tr>
+                    <th>Important</th>
+                    <td class="text-end">{{ checkIcon(note.important) }}</td>
+                </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col">{{ dreamCard(note.record) }}</div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends 'dreamdb/index.html' %}
+
+{% block subtitle %}{{ tagtype|capitalize }}{% endblock %}
+
+{% block subcontent %}
+<div class="row align-items-center">
+    <div class="col">
+        <h1>{{ tagtype|capitalize }}</h1>
+    </div>
+    <div class="col-auto">
+        <form action="" method="post">
+            {{ form.csrf_token }}
+            {% if content %}
+            <div class="btn-group">
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalId">Filter</button>
+                <button type="button" class="btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="visually-hidden">Toggle dropdown</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="{{ url_for('dreamdb.%s' % tagtype, remove='true') }}">Clear</a></li>
+                </ul>
+            </div>
+            {% else %}
+            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalId">Filter</button>
+            {% endif %}
+            <div
+                class="modal fade"
+                id="modalId"
+                data-bs-backdrop="static"
+                data-bs-keyboard="false"
+                
+                role="dialog"
+                aria-labelledby="modalTitleId"
+                aria-hidden="true"
+            >
+                <div
+                    class="modal-dialog modal-dialog-centered modal-md"
+                    role="document"
+                >
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalTitleId">
+                                Filter notes
+                            </h5>
+                            <button
+                                type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Close"
+                            ></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row row-cols-1 g-4">
+                                <div class="col">
+                                    {{ form.content(class='form-control', placeholder='Tag contains...', autocomplete='off') }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <div class="row g-2">
+                                {% if content %}
+                                <div class="col-auto">
+                                    <a class="btn btn-secondary" href="{{ url_for('dreamdb.%s' % tagtype, remove='true') }}">Clear</a>
+                                </div>
+                                {% endif %}
+                                <div class="col-auto">{{ form.submit(class='btn btn-primary') }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>       
+        </form>
+    </div>
+</div>
+{% if content %}
+<div class="row align-items-center g-2">
+    <div class="col-auto">Filtered by:</div>
+    <div class="col-auto">
+        <a href="{{ url_for('dreamdb.%s' % tagtype, remove='true') }}"><span class="badge pill text-bg-primary">content: "{{ content }}" <span class="bi-x"></span></span></a>
+    </div>
+</div>
+{% endif %}
+<br>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Tag</th>
+            <th class="text-center col-1">Use count</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for t in paginator %}
+        {% set a = {'%s_id' % tagtype[:-1]: t.id} %}
+        <tr>
+            <td>
+                <a class="defaultlink" href="{{ url_for('dreamdb.%s' % tagtype[:-1], **a) }}">{{ t.tag }}</a>
+            </td>
+            <td class="text-center">{{ t.records|length }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{{ basicpaginator('dream', tagtype, paginator) }}
+
+{% endblock %}

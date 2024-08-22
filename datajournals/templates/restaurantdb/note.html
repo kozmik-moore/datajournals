@@ -1,0 +1,50 @@
+{% extends 'restaurantdb/index.html' %}
+{% from 'restaurantdb/macros.html' import restaurantCard, dateGrid %}
+
+{% block title %}Restaurant Notes{% endblock %}
+
+{% block subcontent %}
+
+<div class="row align-items-center justify-content-between">
+    <div class="col"><h1>Note</h1></div>
+    <div class="col-auto">
+        <a class="btn btn-sm btn-primary" href="{{ url_for('restaurantdb.update_note', note_id=note.id) }}">edit</a>
+    </div>
+</div>
+<br>
+
+<div class="row row-cols-1 row-cols-md-2 g-4">
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header"><h2>Details</h2></div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>Date (UTC)</th>
+                        <td class="text-end">
+                            <span class="d-none d-sm-inline">{{ dateGrid(note.date_added, multiline=False) }}</span>
+                            <span class="d-inline d-sm-none">{{ dateGrid(note.date_added) }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <table class="table table-borderless my-0">
+                            <thead>
+                                <tr>
+                                    <th class="pt-0">Content</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{{ note.note|markdown }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col">{{ restaurantCard(note.record) }}</div>
+</div>
+<br>
+{% endblock %}

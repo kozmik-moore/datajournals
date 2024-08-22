@@ -1,0 +1,55 @@
+{% extends 'sleepdb/index.html' %}
+{% from 'sleepdb/macros.html' import sessionCard, dateparts_stringify %}
+
+{% block subtitle %}Note - {{ note.date_added.strftime('%a, %b %d, %Y') }}{% endblock %}
+
+{% block subcontent %}
+
+<div class="row justify-content-between align-items-sm-center g-4">
+    <div class="col-auto">
+        <h1>Note</h1>
+    </div>
+    <div class="col-auto">
+        <div class="dropdown">
+            <div class="btn btn-sm btn-primary dropdown-toggle" data-bs-toggle="dropdown">options</div>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="{{ url_for('sleepdb.update_note', note_id=note.id) }}">edit</a></li>
+                {% if note.record %}
+                <li><a class="dropdown-item" href="{{ url_for('sleepdb.record', record_id=note.record.id) }}">go to record</a></li>
+                {% else %}
+                <li><a class="dropdown-item disabled">go to record</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</div>
+<br>
+
+<div class="row row-cols-1 row-cols-sm-2 g-4">
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header"><h2>Note details</h2></div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th class="align-middle">Added</th>
+                        <td class="text-end">{{ dateparts_stringify(note.date_added, displaytime=True) }}</td>
+                    </tr>
+                    <tr>
+                        <th class="align-middle">Contents</th>
+                        <td>
+                            <div class="row justify-content-end align-items-center">
+                                <div class="col-auto"><p class="mb-0">{{ (note.note|markdown)[3:-4] }}</p></div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        {{ sessionCard(note.record) }}
+    </div>
+</div>
+<br>
+{% endblock %}

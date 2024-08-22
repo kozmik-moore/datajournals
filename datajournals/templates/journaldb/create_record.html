@@ -1,0 +1,182 @@
+{% extends 'journaldb/index.html' %}
+
+{% block subtitle %}{{ 'Add' if request.endpoint == 'journaldb.create_record' else 'Edit' }} entry{% endblock %}
+
+{% block subcontent %}
+
+<!-- Header -->
+<div class="row align-items-center">
+    <div class="col">
+        <h1>{{ 'Add' if request.endpoint == 'journaldb.create_record' else 'Edit' }} entry</h1>
+    </div>
+    {% if request.endpoint == 'journaldb.update_record' %}
+    <div class="col-auto">
+        <!-- Modal trigger button -->
+        <button
+            type="button"
+            class="btn btn-outline-danger btn-sm"
+            data-bs-toggle="modal"
+            data-bs-target="#modalId"
+        >
+            Delete
+        </button>
+        <div
+            class="modal fade"
+            id="modalId"
+            tabindex="-1"
+            data-bs-backdrop="static"
+            data-bs-keyboard="false"
+            
+            role="dialog"
+            aria-labelledby="modalTitleId"
+            aria-hidden="true"
+        >
+            <div
+                class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm"
+                role="document"
+            >
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTitleId">
+                            Delete entry?
+                        </h5>
+                        <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"
+                        ></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-center m-0">Are you sure you want to delte this entry?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal"
+                        >
+                            Close
+                        </button>
+                        <a type="button" class="btn btn-danger" href="{{ url_for('journaldb.delete_record', record_id=record.id) }}">Delete</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Optional: Place to the bottom of scripts -->
+        <script>
+            const myModal = new bootstrap.Modal(
+                document.getElementById("modalId"),
+                options,
+            );
+        </script>
+        
+    </div>
+    {% endif %}
+</div>
+<br>
+
+{{ bootstrapTagsScript() }}
+
+
+<form method="POST" action="" enctype="multipart/form-data">
+    {{ form.csrf_token }}
+    {% if form.parent_id %}
+    <!-- Parent id -->
+    {{ form.parent_id() }}
+    {% endif %}
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+        <div class="col">
+            <!-- Content -->
+            {{ form.record(class='form-control', rows=10, placeholder='Add a record...') }}
+        </div>
+        <div class="col">
+            <div class="row row-cols-1 g-4">
+                <!-- Mark unfinished -->
+                <div class="col">
+                    <div class="row g-4">
+                        <div class="col-auto">
+                            <div class="row g-2">
+                                <div class="col-auto">{{ form.unfinished(class='form-check-input') }}</div>
+                                <div class="col-auto">{{ form.unfinished.label(class='form-label') }}</div>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="row g-2">
+                                <div class="col-auto">{{ form.watched(class='form-check-input') }}</div>
+                                <div class="col-auto">{{ form.watched.label(class='form-label') }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Date -->
+                <div class="col">
+                    {{ form.record_date(class='form-control') }}
+                </div>
+                {% for i in 'subjects', 'descriptors', 'emotions' %}
+                <!-- {{ i[:-1]|capitalize + ' tags' }} -->
+                <div class="col">
+                    {{ form[i](class='form-select', placeholder='%s tags...' % i|capitalize) }}
+                </div>
+                {% endfor %}
+                {% if request.endpoint == 'journaldb.create_record' %}
+                <!-- Attachments -->
+                <div class="col">
+                    {{ form.attachments(class='form-control', placeholder='Attachments...') }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% if request.endpoint == 'journaldb.update_record' %}
+        <!-- Add attachments -->
+        <div class="col">
+            <h5>Add attachments</h5>
+            {{ form.add_attachments(class='form-control', placeholder='Attachments...') }}
+        </div>
+        <!-- Existing attachments -->
+        <div class="col">
+            <h5>Existing attachments</h5>
+            {% if form.attachments.entries %}
+            <table class="table table-borderless">
+                <thead>
+                    <tr>
+                        <th>Filename</th>
+                        <th class="col-1 text-center">Delete?</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in form.attachments.entries %}
+                    {% set f = e.form %}
+                    <tr>
+                        <td>{{ f.attachment_id() }}{{ f.filename(class='form-control', placeholder='Filename required') }}</td>
+                        <td class="text-center">{{ f.delete(class='form-check-input') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-center defaulttag p-1">None</p>
+            {% endif %}
+        </div>
+        {% endif %}
+        <!-- Submit/cancel -->
+        <div class="col">
+            <div class="row g-2">
+                <div class="col-auto">{{ form.submit(class="btn btn-primary") }}</div>
+                <div class="col-auto">
+                    <a type="button" class="btn btn-primary" href="{{ request.referrer }}">Cancel</a>
+                </div>
+            </div>
+        </div>
+    </div>    
+</form>
+<br>
+
+{% if request.endpoint == 'journaldb.create_record' %}
+<script src="{{ url_for('static', filename='datefunctions.js') }}"></script>
+<script>
+    setDatetime('record_date')
+</script>
+{% endif %}
+{% endblock %}

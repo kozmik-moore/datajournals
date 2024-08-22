@@ -1,0 +1,147 @@
+{% extends 'gamingdb/index.html' %}
+{% from 'gamingdb/macros.html' import noteSessionDataCard %}
+
+{% block subtitle %}Update Interruption{% endblock %}
+
+{% block subcontent %}
+<div class="row justify-content-between">
+    <div class="col">
+        <h1>Update session interruption</h1>
+    </div>
+    <div class="col-auto d-flex align-items-center align-items-md-center">
+        <form method="POST" action="{{ url_for('gamingdb.delete_session_interruption', session_interruption_id=session_interruption.id) }}">
+            <input type="submit" class="btn btn-outline-danger btn-sm" value="Delete" onclick="return confirm('Are you sure you want to delete this interruption?')">
+        </form>
+    </div>
+</div>
+<br>
+
+<script type="module">
+    import Tags from "https://cdn.jsdelivr.net/gh/lekoala/bootstrap5-tags@master/tags.js";
+    Tags.init("select", {separator: '|,|', addOnBlur:'true', allowNew: 'true', allowClear: 'false'});
+</script>
+
+<form method="POST" action="">
+    {{ form.csrf_token }}
+
+    <!-- Hidden field containing record id -->
+    {{ form.record_id }}
+
+    <div class="row justify-content-between">
+        <div class="col col-md-6 pb-2">
+            <div class="d-grid gap-2">
+        
+                <!-- Interruption tags -->
+                <div class="row">
+                    <div class="col">
+                        {{ form.interruption.label(class='form-label') }}
+                        {{ form.interruption(class='form-select') }}
+                    </div>
+                </div>
+        
+                <!-- Start time -->
+                <div class="row">
+                    <div class="col">
+                        <div class="row justify-content-between">
+                            <div class="col">{{ form.start_time.label(class='form-label') }}</div>
+                            <div class="col-auto">
+                                <div class="row">
+                                    <div class="col-auto"><a type="button" class="text-decoration-none text-primary" onclick="setStartTime()">now</a></div>
+                                    {# <div class="col-auto"><a type="button" class="text-decoration-none text-primary" onclick="resetStartTime()">reset</a></div> #}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">{{ form.start_time(class='form-control') }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stop time -->
+                <div class="row">
+                    <div class="col">
+                        <div class="row justify-content-between">
+                            <div class="col">{{ form.stop_time.label(class='form-label') }}</div>
+                            <div class="col-auto"><a type="button" class="text-decoration-none text-primary" onclick="setStopTime()">now</a></div>
+                        </div>
+                        <div class="row">
+                            <div class="col">{{ form.stop_time(class='form-control') }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Duration -->
+                <div class="row">
+                    <div class="col">
+                        {{ form.duration.label(class='form-label') }}
+                        {{ form.duration(class='form-control') }}
+                    </div>
+                </div>
+        
+                <!-- "Add another interruption" check -->
+                <div class="row">
+                    <div class="col">
+                        {{ form.add_interruption(class='form-check-input') }}
+                        {{ form.add_interruption.label(class='form-check-label') }}
+                    </div>
+                </div>
+            
+                <!-- "Add a note" check -->
+                <div class="row">
+                    <div class="col">
+                        {{ form.add_note(class='form-check-input') }}
+                        {{ form.add_note.label(class='form-check-label') }}
+                    </div>
+                </div>
+            
+                <br>
+            
+                <!-- Submit and cancel buttons -->
+                <div class="row">
+                    <div class="col-auto pe-1">{{ form.submit(class="btn btn-primary") }}</div>
+                    <div class="col-auto px-0">
+                        <a type="button" class="btn btn-primary" href="{{ url_for('gamingdb.record', record_id=session_interruption.record.id) }}">Cancel</a>
+                    </div>
+                </div>
+                <br>
+            </div>
+        </div>
+        <div class="col col-md-5 pb-2">
+            <div class="row">
+                <div class="col">
+                    {{ noteSessionDataCard(record=session_interruption.record, game=session_interruption.record.game) }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <br>
+    
+</form>
+
+<script src="{{ url_for('static', filename='datefunctions.js') }}"></script>
+<script>
+    function setStopTime(){
+        setDatetime('stop_time')
+    }
+</script>
+<script>
+    function setStartTime(){
+        setDatetime('start_time')
+    }
+</script>
+<script>
+    function resetStartTime(){
+        resetDatetime('start_time')
+    }
+</script>
+
+<script>
+    function set_time(doc){
+        var d = new Date();
+        var time = d.getTime() / 1000;
+        var newdoc = doc + '?time=' + time;
+        window.location.assign(newdoc);
+        return true;
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends 'journaldb/index.html' %}
+{% from 'journaldb/macros.html' import createRecordsTable %}
+
+{% block subtitle %}Descriptor - {{ descriptor.tag }}{% endblock %}
+
+{% block subcontent %}
+
+{{ taglayout(
+    databasename='journal',
+    tagtype='descriptor', 
+    recordsection=createRecordsTable(pagination, tags=False, ),
+    tagobject=descriptor, 
+    paginator=pagination,
+    ) 
+}}
+
+{% endblock %}

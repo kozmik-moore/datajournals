@@ -1,0 +1,11 @@
+{% extends 'healthdb/index.html' %}
+
+{% block subtitle %}Descriptors{% endblock %}
+
+{% block subcontent %}
+{{ tagslayout(
+    databasename='health',
+    tagtype='descriptor',
+    paginator=paginator
+) }}
+{% endblock %}

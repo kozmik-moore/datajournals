@@ -1,0 +1,231 @@
+{% extends 'gamingdb/index.html' %}
+{% from 'gamingdb/macros.html' import stringify_datespan %}
+
+{% block subtitle %}Edit session record{% endblock %}
+
+{% block subcontent %}
+<!-- Header -->
+<div class="row justify-content-between">
+    <div class="col-auto">
+        <h1>Edit session record</h1>
+    </div>
+    <div class="col-auto">
+        <form method="POST" action="{{ url_for('gamingdb.delete_record', record_id=record.id) }}">
+            <input type="submit" class="btn btn-outline-danger btn-sm" value="Delete" onclick="return confirm('Are you sure you want to delete this record?')">
+        </form>
+    </div>
+</div>
+<br>
+
+<script type="module">
+    import Tags from "https://cdn.jsdelivr.net/gh/lekoala/bootstrap5-tags@master/tags.js";
+    Tags.init("select", {separator: '|,|', addOnBlur:'true', allowNew: 'true', allowClear: 'false'});
+</script>
+
+<form method="POST" action="">
+    {{ form.csrf_token }}
+
+    <div class="row row-cols-1 g-4">
+        <div class="col">
+            <div class="row row-cols-1 row-cols-sm-2 g-4">
+                <div class="col">
+                    <!-- Time data -->
+                    <div class="row row-cols-1 g-4">
+                        {% for ff, stf, rtf in [
+                            (form.start_time, 'setStartTime()', 'resetStartTime()'),
+                            (form.stop_time, 'setStopTime()', 'resetStopTime()'),
+                        ] %}
+                        <div class="col">
+                            <div class="row justify-content-between align-items-center">
+                                <div class="col-auto">{{ ff['label'](class='form-label') }}</div>
+                                <div class="col-auto">
+                                    <div class="dropdown">
+                                        <button
+                                            class="btn btn-link text-decoration-none text-primary btn-sm dropdown-toggle"
+                                            type="button"
+                                            id="triggerId"
+                                            data-bs-toggle="dropdown"
+                                            aria-haspopup="true"
+                                            aria-expanded="false"
+                                        >
+                                            <span class="text-primary bi-clock"></span>
+                                        </button>
+                                        <div class="dropdown-menu dropdown-menu-end" aria-labelledby="triggerId">
+                                            <a type="button" class="dropdown-item" onclick="{{ stf }}">set time now</a>
+                                            <a type="button" class="dropdown-item" onclick="{{ rtf }}">clear</a>
+                                        </div>
+                                    </div>                                    
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">{{ ff(class='form-control') }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="row row-cols-1 g-4">
+                        {% for ff, ft, d in [
+                            (form.game, 'select', 'Game'),
+                            (form.emotions, 'select', 'Emotion tags'),
+                            (form.session_rating, 'control', 'Rating'),
+                        ] %}
+                        <!-- {{ d }} -->
+                        <div class="col">
+                            {% set c = 'form-' + ft %}
+                            {{ ff['label'](class='form-label') }}
+                            {{ ff(class=c) }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col px-2">
+            <!-- Interruption tags -->
+            <div class="row">
+                <div class="col">
+                    {{ form.interruptions.label(class='form-label') }}
+                </div>
+            </div>
+            <div class="row border rounded mx-1">
+                <div class="col">
+                    {% if record.session_interruptions %}
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>source</th>
+                                <th class="d-none"></th>
+                                <th class="text-center">delete?</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for subform in form.interruptions %}
+                            {% set index = (loop.index - 1)|string %}
+                            {% set mbid = 'modalButton-' + index %}
+                            {% set sid = "interruptions-" + index + '-interruption' %}
+                            {% set mtid = "modalTitle-" + index %}
+                            {% set mid = 'modal-' + index %}
+                            {% set itid = 'interruptionTags-' + index %}
+                            <tr>
+                                <td>
+                                    <div class="row row-cols-2 align-items-center gx-1">
+                                        <div class="col-auto">
+                                            <p class="my-0" id="{{ itid }}">{{ subform.interruption.data|join(', ') }}</p>
+                                            <span></span>
+                                        </div>
+                                        <div class="col">
+                                            <!-- Modal trigger button -->
+                                            <button type="button" class="btn btn-sm" data-bs-toggle="modal" data-bs-target="#{{ mid }}" id="{{ mbid }}">
+                                                <span class="text-primary-emphasis bi-pencil"></span>
+                                            </button>
+                                            
+                                            <!-- Modal Body -->
+                                            <div class="modal fade" id="{{ mid }}" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="{{ mtid }}" aria-hidden="true">
+                                                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg" role="document">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title" id="{{ mtid }}">Modal title</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="setButtonText('{{ sid }}', '{{ itid }}')"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            {% for l, f in [
+                                                                ('source', subform.interruption(class='form-control', placeholder='Choose interruptions...')),
+                                                                ('start', subform.start_time(class='form-control')),
+                                                                ('stop', subform.stop_time(class='form-control')),
+                                                                ('duration', subform.duration(class='form-control')),
+                                                                ] %}
+                                                            <div class="row row-cols-1 row-cols-sm-2 align-items-center pb-2">
+                                                                <div class="col">{{ l }}</div>
+                                                                <div class="col">{{ f }}</div>
+                                                            </div>
+                                                            {% endfor %}
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="setButtonText('{{ sid }}', '{{ itid }}')">Close</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="d-none">{{ subform.interruption_id }}</td>
+                                <td class="col-1 text-center">{{ subform.delete_interruption(class='form-check-input') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="row">
+                        <div class="col">
+                            <p class="text-center defaulttag my-3">No interruptions</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            {% for ff, d in [
+                (form.add_interruption, 'Add interruption check'),
+                (form.add_note, 'Add note check'),
+            ] %}
+            <div class="row g-2">
+                <!-- {{ d }} -->
+                <div class="col-auto">{{ ff(class='form-check-input') }}</div>
+                <div class="col-auto">{{ ff['label'](class='form-check-label') }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="col">
+            <!-- Submit/Cancel -->
+            <div class="row g-2">
+                <div class="col-auto">{{ form.submit(class="btn btn-primary") }}</div>
+                <div class="col-auto">
+                    <a type="button" class="btn btn-primary" href="{{ url_for('gamingdb.record', record_id=record.id) }}">Cancel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</form>
+
+<br>
+
+<script src="{{ url_for('static', filename='datefunctions.js') }}"></script>
+<script>
+    function setButtonText(selectid, buttonid) {
+        var result = [];
+        var b = document.getElementById(buttonid)
+        var select = document.getElementById(selectid)
+        var s = select && select.options;
+        var opt;
+
+        for (var i=0, iLen=s.length; i<iLen; i++) {
+            opt = s[i];
+            if (opt.selected) {
+                result.push(opt.value || opt.text);
+            }
+        }
+        b.textContent = result.join(', ');
+    }
+
+    function setStopTime(){
+        setDatetime('stop_time')
+    }
+
+    function setStartTime(){
+        setDatetime('start_time')
+    }
+
+    function resetStartTime(){
+        resetDatetime('start_time')
+    }
+
+    function resetStopTime(){
+        resetDatetime('stop_time')
+    }
+</script>
+{% endblock %}

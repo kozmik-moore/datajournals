@@ -1,0 +1,35 @@
+.emotiontag {
+    color: lightslategray;
+}
+
+.interruptiontag {
+    color: lightslategray;
+}
+
+.defaultlink {
+    text-decoration: none;
+}
+
+.defaulttag {
+    color: lightslategray;
+}
+
+.card-header {
+    text-align: center;
+}
+
+.table {
+    vertical-align: middle;
+}
+
+.tableFixHead          { overflow: auto; height: 100px; width: 240px; }
+.tableFixHead thead th { position: sticky; top: 0; z-index: 1; }
+.tableFixHead tbody th { position: sticky; left: 0; }
+
+.popover {
+    max-width: 500px;
+}
+
+textarea {
+    height: 100%;
+}

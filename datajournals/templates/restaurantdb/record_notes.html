@@ -1,0 +1,54 @@
+{% extends 'restaurantdb/index.html' %}
+{% from 'macros.html' import createBasicPaginatorNavbar %}
+
+{% block title %}Restaurant Notes - {{ record.name }}{% endblock %}
+
+{% block subcontent %}
+
+<h1>Notes</h1>
+<br>
+<div class="row justify-content-between">
+    <div class="col-auto">
+        <h2><a href="{{ url_for('restaurantdb.record', record_id=record.id)}}">{{ record.name }}</a></h2>
+    </div>
+    <div class="col-auto">
+        <h2><a type="button" class="btn btn-primary" href="{{ url_for('restaurantdb.create_note', record_id=record.id)}}">Add</a></h2>
+    </div>
+</div>
+<br>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Note</th>
+            <th>Date Added</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for note in pagination.items %}
+        <tr>
+            <td>
+                <div class="row">
+                    <div class="col-auto">
+                        {{ note.note|markdown }}
+                    </div>
+                    {% if note.important %}
+                    <div class="col-auto">
+                        {{ badge() }}
+                    </div>
+                    {% endif %}
+                </div>
+            </td>
+            <td>{{ note.date_added.strftime('%a, %b %d, %Y') }}</td>
+            <td><a class="text-decoration-none" href="{{ url_for('restaurantdb.note', note_id=note.id)}}">view</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<br>
+
+{# Notes Paginator #}
+
+{{ basicpaginator('restaurant', 'record_notes', pagination, page_args=('record_id', record.id)) }}
+
+{% endblock %}

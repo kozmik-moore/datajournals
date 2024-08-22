@@ -1,0 +1,58 @@
+{% extends 'gamingdb/index.html' %}
+
+{% block subtitle %}Games{% endblock %}
+
+{% block subcontent %}
+
+<!-- Header and Stats -->
+<div class="row justify-content-between align-items-sm-center">
+    <div class="col">
+        <h1>Games</h1>
+    </div>
+    <div class="col">
+        <form class="form-inline" action="{{ url_for('gamingdb.search') }}" method="get">
+            <div class="row justify-content-end align-items-center">
+                <div class="col-auto pb-2 pb-sm-0">
+                    <input class="form-control text-start" type="search", name="games" placeholder="Filter..." autocomplete="off" required>
+                </div>
+                <div class="col-auto ps-1">
+                    <button class="btn btn-sm btn-primary">Submit</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<br>
+
+<!-- Record section-->
+<div class="row">
+    <div class="col">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th class="">Name</th>
+                    <th class="col-1 text-center">Has notes</th>
+                    <th class="col-1 text-end">Session count</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for game in paginator %}
+                <tr>
+                    <td>
+                        <div class="row">
+                            <div class="col-auto"><a class="text-decoration-none" href="{{ url_for('gamingdb.game', game_id=game.id) }}">{{ game.name }}</a></div>
+                        </div>
+                    </td>
+                    <td class="text-center"><span class="{{ 'bi-check-lg text-primary' if game.notes else '' }}"></span></td>
+                    <td class="text-end">{{ game.records|length }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Pagination Navbar -->
+{{ basicpaginator(databasename='gaming', view='games', paginator=paginator) }}
+
+{% endblock %}

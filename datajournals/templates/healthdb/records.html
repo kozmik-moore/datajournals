@@ -1,0 +1,17 @@
+{% extends 'healthdb/index.html' %}
+{% from 'healthdb/macros.html' import createRecordsTable %}
+
+{% block subtitle %}Health Records{% endblock %}
+
+{% block subcontent %}
+
+{# Remove buttonsection arg later #}
+{{ recordslayout(
+    databasename='health', 
+    recordsection=createRecordsTable(paginator, typecol=False),
+    paginator=paginator, 
+    count=count
+    ) 
+}}
+
+{% endblock %}

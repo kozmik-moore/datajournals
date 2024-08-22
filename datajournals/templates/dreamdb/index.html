@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% from 'dreamdb/macros.html' import dreamCard, dreamDateGrid %}
+
+{% block title %}DreamDB - {% block subtitle %}Dashboard{% endblock %}{% endblock %}
+
+
+{% block content %}
+
+{% set links = {
+    'Dashboard': url_for('dreamdb.index'),
+    'Dreams': url_for('dreamdb.records'),
+    'Notes': url_for('dreamdb.notes'),
+    'Tags': {
+        'Subjects': url_for('dreamdb.subjects'),
+        'Descriptors': url_for('dreamdb.descriptors'),
+        'Emotions': url_for('dreamdb.emotions')
+    },
+} %}
+
+{% set buttons = {
+    'Add dream': url_for('dreamdb.create_record'),
+    'Add note': url_for('dreamdb.create_note'),
+} %}
+
+{{ navDiv(
+    navlinks=links,
+    buttonlinks=buttons
+) }}
+
+
+{% block subcontent %}
+
+{% macro timeTagsModal() %}
+<button
+    type="button"
+    class="btn btn-primary btn-sm"
+    data-bs-toggle="modal"
+    data-bs-target="#tagModalId"
+>
+    See time data
+</button>
+
+<div
+    class="modal fade"
+    id="tagModalId"
+    tabindex="-1"
+    data-bs-backdrop="static"
+    data-bs-keyboard="false"
+    
+    role="dialog"
+    aria-labelledby="tagModalTitleId"
+    aria-hidden="true"
+>
+    <div
+        class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg"
+        role="document"
+    >
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tagModalTitleId">
+                    Most common for the last...
+                </h5>
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                ></button>
+            </div>
+            <div class="modal-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            {% for ch in ['', '7 days', '30 days', '180 days', 'all time'] %}
+                            <th class="text-center">{{ ch }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set map = tagstats.timedata %}
+                        {% if map %}
+                        {% for rh, r in map.items() %}
+                        <tr>
+                            <th>{{ rh[:-1] }}</th>
+                            {% for i in r %}
+                            <td class="text-center">{{ tagsRow('dreamdb.%s' % rh[:-1], rh[:-1] + '_id', i, align='center', alignempty='center') }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+{% macro tagsPopover() %}
+{% macro tagsPopoverContent() %}
+<div class="row row-cols-2 g-0">
+    {% for h in [
+        'subjects', 'descriptors', 'emotions'
+    ] %}
+    <div class="col-10">
+        <a class="defaultlink" href="{{ url_for('dreamdb.%s' % h) }}">{{ h|capitalize }}</a></div>
+    <div class="col-2">{{ tagstats.counts[h] }}</div>
+    {% endfor %}
+</div>
+{% endmacro %}
+<button
+    tabindex="0"
+    type="button"
+    class="btn btn-sm"
+    data-bs-toggle="popover"
+    data-bs-trigger="focus"
+    data-bs-html="true"
+    data-bs-placement="left"
+    title="Individual tag counts"
+    data-bs-content='{{ tagsPopoverContent() }}'
+>
+    {{ infoButton() }}
+</button>
+
+{% endmacro %}
+
+{% macro dreamTable() %}
+<table class="table">
+    <tr>
+        <th>Count</th>
+        <td class="text-end">{{ dreamstats.count }}</td>
+    </tr>
+    <tr>
+        <th>Latest</th>
+        <td class="text-end">
+            {% if dreamstats.latest %}
+            <a class="defaultlink" href="{{ url_for('dreamdb.record', record_id=dreamstats.latest.id) }}">{{ dreamDateGrid(dreamstats.latest) }}</a>
+            {% else %}
+            <p class="defaulttag m-0">None</p>
+            {% endif %}
+        </td>
+    </tr>
+</table>
+{% endmacro %}
+
+{% macro noteTable() %}
+<table class="table">
+    <tr>
+        <th>Count</th>
+        <td class="text-end">{{ notestats.count }}</td>
+    </tr>
+    <tr>
+        <th>Latest</th>
+        <td class="text-end">
+            {% if notestats.latest %}
+            <a class="defaultlink" href="{{ url_for('dreamdb.note', note_id=notestats.latest.id) }}">{{ dateGrid(notestats.latest.date_added) }}</a>
+            {% else %}
+            <p class="defaulttag m-0">None</p>
+            {% endif %}
+        </td>
+    </tr>
+</table>
+{% endmacro %}
+
+{% macro tagTable() %}
+<table class="table">
+    <tr>
+        <th>Count</th>
+        <td class="text-end">
+            <div class="row g-0 justify-content-end align-items-center">
+                <div class="col-auto">{{ tagstats.counts.all }}</div>
+                <div class="col-auto">
+                    {{ tagsPopover() }}
+                </div>
+            </div>
+        </td>
+    </tr>
+    {% for h in 'subject', 'descriptor', 'emotion' %}
+    <tr>
+        <th>Most common {{ h }}</th>
+        <td class="text-end">
+            <div class="row g-0 align-items-center justify-content-end">
+                <div class="col-auto">{{ tagsRow('dreamdb.%s' % h, '%s_id' % h, tagstats['%ss' % h]['mostcommon']['tags']) }}</div>
+                <div class="col-auto">
+                    {{ tagsCountPopover(tagstats['%ss' % h]['all'], 'dreamdb.%ss' % h, '%s_id' % h, title='All %s tags counts' % h, tooltip='All %s tags counts' % h) }}
+                </div>
+            </div>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% endmacro %}
+
+<div class="row justify-content-between">
+    <div class="col-auto">
+        <h1>Dashboard</h1>
+    </div>
+</div>
+<br>
+
+<div class="row row-cols-1 row-cols-md-2 g-4">
+    <div class="col">{{ dreamCard(record, title='Selected dream') }}</div>
+    <div class="col">
+        <div class="row row-cols-1 g-4">
+            {% for h, d, cd in [
+                ('dream', timeDataModal(dreamstats.timedata, title='Mean time to record dream', name='dream'), dreamTable()),
+                ('note', timeDataModal(notestats.timedata, title='Mean time to record note', name='note'), noteTable()),
+                ('tag', timeTagsModal(), tagTable()),
+            ] %}
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-header"><h2>{{ h|capitalize }}s</h2></div>
+                    <div class="card-body">
+                        {{ cd }}
+                    </div>
+                    <div class="card-footer text-muted">
+                        <div class="row justify-content-end">
+                            <div class="col-auto">
+                                {{ d }}                               
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<br>
+
+
+{{ popoverScript() }}
+
+{% endblock %}
+
+{% endblock %}

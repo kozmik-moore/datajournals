@@ -1,0 +1,51 @@
+{% extends 'restaurantdb/index.html' %}
+
+{% block title %}Restaurant Visits - {{ record.name }}{% endblock %}
+
+{% block subcontent %}
+
+<h1>Visits</h1>
+<br>
+<div class="row justify-content-between">
+    <div class="col-auto">
+        <h2><a href="{{ url_for('restaurantdb.record', record_id=record.id) }}">{{ record.name }}</a></h2>
+    </div>
+    <div class="col-auto">
+        <h2><a type="button" class="btn btn-primary" href="{{ url_for('restaurantdb.create_visit', record_id=record.id)}}">Add</a></h2>
+    </div>
+</div>
+<div class="row">
+    <div class="col"></div>
+</div>
+<br>
+
+<table class="table">
+    <thead>
+      <tr>
+        <th scope="col">Date</th>
+        <th scope="col">Meal</th>
+        <th scope="col">Visit Rating</th>
+        <th scope="col">Price Rating</th>
+        <th scope="col">Comments</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for visit in pagination.items %}
+        <tr>
+            <td>{{ visit.date.strftime('%a, %b %d, %Y') }}</td>
+            <td>{{ visit.meal }}</td>
+            <td>{{ visit.visit_rating }}</td>
+            <td>{{ visit.price_rating }}</td>
+            <td>{{ visit.comments }}</td>
+            <td><a class="text-decoration-none" href="{{ url_for('restaurantdb.visit', visit_id=visit.id)}}">view</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<br>
+
+{# Reord visits pagination #}
+{{ basicpaginator('restaurant', 'record_visits', pagination, page_args=('record_id', record.id)) }}
+
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends 'restaurantdb/index.html' %}
+{% from 'restaurantdb/macros.html' import restaurantCard %}
+
+{% block title %}{{ 'Edit' if record else 'Add' }} restaurant{% endblock %}
+
+{% block subcontent %}
+<div class="row justify-content-between">
+    <div class="col">
+        <h1>{{ 'Edit' if record else 'Add' }} restaurant</h1>
+    </div>
+    {% if record %}
+    <div class="col-auto">
+        <form method="POST" action="{{ url_for('restaurantdb.delete_record', record_id=record.id) }}">
+            <input type="submit" value="Delete" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to delete this note?');">
+        </form>
+    </div>
+    {% endif %}
+</div>
+
+<br>
+
+{{ bootstrapTagsScript() }}
+
+<form class="needs-validation" method="POST" action="">
+    {{ form.csrf_token }}
+
+    {{ messageFlasher() }}
+
+    <div class="row row-cols-1 g-4">
+        <div class="col col-md-6">
+            <div class="row row-cols-1 g-2">
+                <div class="col">
+                    {{ form.name(class='form-control', placeholder='Add a name...') }}
+                </div>
+                <div class="col">
+                    <div class="row g-4 align-items-center">
+                        <div class="col">
+                            {{ form.tags(class='form-select') }}
+                        </div>
+                        <div class="col-auto">
+                            <div class="row g-2">
+                                <div class="col-auto">
+                                    {{ form.avoid(class='form-check-input') }}
+                                </div>
+                                <div class="col-auto">
+                                    {{ form.avoid.label(class='form-check-label') }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    {{ form.description(class='form-control', rows=10, placeholder='Add a description...') }}
+                </div>
+                {% if not record %}
+                <div class="col">
+                    <div class="row g-2">
+                        <div class="col-auto">
+                            {{ form.add_visit(class='form-check-input') }}
+                        </div>
+                        <div class="col-auto">
+                            {{ form.add_visit.label(class='form-check-label') }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col">
+            <div class="row g-2">
+                <div class="col-auto">{{ form.submit(class="btn btn-primary") }}</div>
+                {% set urlstring = url_for('restaurantdb.record', record_id=record.id) if record else request.referrer %}
+                <div class="col-auto">
+                    <a type="button" class="btn btn-primary" href="{{ urlstring }}">Cancel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br>
+
+</form>
+{% endblock %}

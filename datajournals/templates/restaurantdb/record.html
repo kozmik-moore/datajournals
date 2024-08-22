@@ -1,0 +1,165 @@
+{% extends 'restaurantdb/index.html' %}
+{% from 'macros.html' import createRecordPage %}
+{% from 'restaurantdb/macros.html' import tagRow, dateGrid %}
+
+{% block title %}Restaurant - {{ record.name }}{% endblock %}
+
+{% block subcontent %}
+
+<div class="row justify-content-between align-items-center">
+    <div class="col-6 col-sm-auto"><h1>Restaurant</h1></div>
+    <div class="col-auto">
+        <div class="dropdown d-block d-sm-none">
+            <button
+                class="btn btn-sm btn-primary dropdown-toggle"
+                type="button"
+                id="triggerId"
+                data-bs-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+            >
+                options
+            </button>
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="triggerId">
+                <a class="dropdown-item" href="{{ url_for('restaurantdb.update_record', record_id=record.id) }}">edit</a>
+                <a class="dropdown-item" href="{{ url_for('restaurantdb.create_visit', record_id=record.id) }}">add visit</a>
+                <a class="dropdown-item" href="{{ url_for('restaurantdb.create_note', record_id=record.id) }}">add note</a>
+            </div>
+        </div>
+        <div class="row g-2 d-none d-sm-flex">
+            <div class="col-auto">
+                <a class="btn btn-sm btn-primary" href="{{ url_for('restaurantdb.update_record', record_id=record.id) }}">edit</a>
+            </div>
+            <div class="col-auto">
+                <a class="btn btn-sm btn-primary" href="{{ url_for('restaurantdb.create_visit', record_id=record.id) }}">add visit</a>
+            </div>
+            <div class="col-auto">
+                <a class="btn btn-sm btn-primary" href="{{ url_for('restaurantdb.create_note', record_id=record.id) }}">add note</a>
+            </div>
+        </div>
+    </div>
+</div>
+<br>
+
+<div class="row row-cols-1 row-cols-md-2 g-4">
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header"><h2>Details</h2></div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th class="align-center">name</th>
+                        <td class="text-end">{{ record.name }}</td>
+                    </tr>
+                    <tr>
+                        <th class="align-center">date added</th>
+                        <td class="text-end">{{ dateGrid(record.date_added, multiline=False) }}</td>
+                    </tr>
+                    <tr>
+                        <th class="align-center">avoid</th>
+                        <td class="text-end">{{ checkIcon(record.avoid, colortrue='danger') }}</td>
+                    </tr>
+                    <tr>
+                        <table class="table table-borderless">
+                            <thead>
+                                <tr>
+                                    <th class="pt-0">description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{{ record.description|markdown }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header"><h2>Visits</h2></div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>latest</th>
+                        <td class="text-end">
+                            {% if visitstats.latest %}
+                            <a class="defaultlink" href="{{ url_for('restaurantdb.visit', visit_id=visitstats.latest.id) }}">
+                                {{ dateGrid(visitstats.latest.date, multiline=False) }}
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% for h, i in [
+                        ('last 7 days', 'week'),
+                        ('last 30 days', 'month'),
+                        ('last 180 days', 'halfyear'),
+                        ('all time', 'all'),
+                    ] %}
+                    <tr>
+                        <th>{{ h }}</th>
+                        <td class="text-end">{{ visitstats.counts[i] }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+            <div class="card-footer">
+                <div class="row justify-content-end">
+                    <div class="col-auto">
+                        <a class="btn btn-sm btn-primary" href="{{ url_for('restaurantdb.visits', restaurant=record.id) }}">See visits</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header"><h2>Tags</h2></div>
+            <div class="card-body">
+                {{ tagRow(record.tags, align='center', alignempty='center') }}
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header"><h2>Notes</h2></div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>latest</th>
+                        <td class="text-end">
+                            {% if notestats.latest %}
+                            <a class="defaultlink" href="{{ url_for('restaurantdb.note', note_id=notestats.latest.id) }}">
+                                {{ dateGrid(notestats.latest.date_added, multiline=False) }}
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% for h, i in [
+                        ('last 7 days', 'week'),
+                        ('last 30 days', 'month'),
+                        ('last 180 days', 'halfyear'),
+                        ('all time', 'all'),
+                    ] %}
+                    <tr>
+                        <th>{{ h }}</th>
+                        <td class="text-end">{{ notestats.counts[i] }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+            <div class="card-footer">
+                <div class="row justify-content-end">
+                    <div class="col-auto">
+                        <a class="btn btn-sm btn-primary" href="{{ url_for('restaurantdb.notes', restaurant=record.id) }}">See notes</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

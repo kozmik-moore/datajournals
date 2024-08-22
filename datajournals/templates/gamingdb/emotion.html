@@ -1,0 +1,92 @@
+{% extends 'gamingdb/index.html' %}
+{% from 'gamingdb/macros.html' import recordsTable, popoverScript, basicUsageTable, descriptiveStatsTable, tagAssociationsTable %}
+
+{% block subtitle %}Emotion - {{ emotion.tag }}{% endblock %}
+
+{% block subcontent %}
+
+<div class="row row-cols-2 justify-content-between align-items-top align-items-md-center">
+    <div class="col-6">
+        <h1>Emotion: {{ emotion.tag }}</h1>
+    </div>
+    <div class="col-auto">
+        <a class="btn btn-sm btn-primary" href="{{ url_for('gamingdb.update_emotion', emotion_id=emotion.id) }}">edit</a>
+    </div>
+</div>
+ 
+<br>
+ 
+<div class="row row-cols-1 g-4">
+    <div class="col">
+        <div class="row row-cols-1 row-cols-sm-2 g-4">
+            {% for h, f in [
+                ('Basic usage', basicUsageTable(stats.usage)),
+                ('Commonly associated tags', tagAssociationsTable(stats)),
+                ('Duration stats', descriptiveStatsTable(stats.durations, includesum=True)),
+                ('Rating stats', descriptiveStatsTable(stats.ratings)),
+            ]%}
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h2>{{ h }}</h2>
+                    </div>
+                    <div class="card-body">
+                        {{ f }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="col">
+        <div class="card" id="recordscard">
+            <div class="card-header">
+                <h2>Sessions</h2>
+            </div>
+            <div class="card-body">
+                {{ recordsTable(paginator=paginator, displaygame=False, displaytags=False, shortmonth=True) }}
+                <br>
+                
+                {# records paginator #}
+                {% set record_prev_disabled = '' if paginator.has_prev else 'disabled' %}
+                {% set record_next_disabled = '' if paginator.has_next else 'disabled' %}
+                
+                <div class="row">
+                    <div class="col">
+                        <nav aria-label="...">
+                            <ul class="pagination">
+                                {% set args = {'emotion_id': emotion.id, 'recordspage': 1} %}
+                                <li class="page-item">
+                                    <a class="page-link {{ record_prev_disabled }}" href="{{ url_for('gamingdb.emotion', **args)}}#recordscard">First</a>
+                                </li>
+                                {% set args = {'emotion_id': emotion.id, 'recordspage': paginator.prev_num} %}
+                                    <li class="page-item">
+                                        <a class="page-link {{ record_prev_disabled }}" href="{{ url_for('gamingdb.emotion', **args) }}#recordscard">Prev</a>
+                                    </li>
+                                {% set args = {'emotion_id': emotion.id, 'recordspage': paginator.next_num} %}
+                                    <li class="page-item">
+                                        <a class="page-link {{ record_next_disabled }}" href="{{ url_for('gamingdb.emotion', **args) }}#recordscard">Next</a>
+                                    </li>
+                                {% set args = {'emotion_id': emotion.id, 'recordspage': paginator.pages} %}
+                                <li class="page-item">
+                                    <a class="page-link {{ record_next_disabled }}" href="{{ url_for('gamingdb.emotion', **args) }}#recordscard">Last</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                    <div class="col-auto">
+                        {% if paginator.pages %}
+                        {{ paginator.page }} of {{ paginator.pages }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<br>
+
+{{ popoverScript() }}
+
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends 'restaurantdb/index.html' %}
+{% from 'restaurantdb/macros.html' import dateGrid %}
+
+{% block title %}Restaurant Visit{% endblock %}
+
+{% block subcontent %}
+
+<div class="row justify-content-between align-items-center">
+    <div class="col"><h1>Visit</h1></div>
+    <div class="col-auto">
+        <div class="row g-2">
+            <div class="col-auto d-none d-sm-flex">
+                <a class="btn btn-sm btn-primary" href="{{ url_for('restaurantdb.update_visit', visit_id=visit.id) }}">edit</a>
+            </div>
+            <div class="col-auto d-none d-sm-flex">
+                <a class="btn btn-sm btn-primary" href="{{ url_for('restaurantdb.create_note', record_id=visit.record.id) }}">add note</a>
+            </div>
+            <div class="col-auto d-flex d-sm-none">
+                <div class="dropdown">
+                    <button
+                        class="btn btn-sm btn-primary dropdown-toggle"
+                        type="button"
+                        id="triggerId"
+                        data-bs-toggle="dropdown"
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                    >
+                        options
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="triggerId">
+                        <a class="dropdown-item" href="{{ url_for('restaurantdb.update_visit', visit_id=visit.id) }}">edit</a>
+                        <a class="dropdown-item" href="{{ url_for('restaurantdb.create_note', record_id=visit.record.id) }}">add note</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<br>
+
+<div class="row row-cols-1 row-cols-sm-2 g-4">
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header"><h2>Details</h2></div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>restaurant</th>
+                        <td class="text-end"><a class="defaultlink" href="{{ url_for('restaurantdb.record', record_id=visit.record.id) }}">{{ visit.record.name }}</a></td>
+                    </tr>
+                    <tr>
+                        <th>date</th>
+                        <td class="text-end">{{ dateGrid(visit.date, multiline=False) }}</td>
+                    </tr>
+                    <tr>
+                        <th>meal</th>
+                        <td class="text-end">{{ visit.meal }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header"><h2>Ratings</h2></div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>price</th>
+                        <td class="text-end">
+                            <p class="text-secondary my-0"><span class="text-success fw-bold">{{ visit.price_rating }}</span>{{ '$$$$'[visit.price_rating|length:] }}</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>satisfaction</th>
+                        <td class="text-end">{{ visit.visit_rating }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header"><h2>Comments</h2></div>
+            <div class="card-body">
+                {% set j = ' justify-content-center' if not visit.comments else '' %}
+                <div class="row{{ j }}">
+                    <div class="col-auto">{{ (visit.comments|markdown) if visit.comments else 'None' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<br>
+
+{% endblock %}

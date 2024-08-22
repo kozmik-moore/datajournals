@@ -1,0 +1,136 @@
+{% extends 'dreamdb/index.html' %}
+{% from 'dreamdb/macros.html' import dreamCard %}
+
+{% block subtitle %}{{ record.record_date.strftime('%a, %b %d, %Y') }}{% endblock %}
+
+{% block subcontent %}
+
+<div class="row justify-content-between align-items-center">
+    <div class="col">
+        <h1>Dream</h1>
+    </div>
+    <div class="col-auto">
+        <div class="row g-2">
+            <div class="col-auto d-none d-md-flex">
+                <a class="btn btn-sm btn-primary" href="{{ url_for('dreamdb.update_record', record_id=record.id) }}">edit</a>
+            </div>
+            <div class="col-auto d-none d-md-flex">
+                <a class="btn btn-sm btn-primary" href="{{ url_for('dreamdb.create_note', record_id=record.id) }}">add note</a>
+            </div>
+            <div class="col-auto d-flex d-md-none">
+                <div class="dropdown">
+                    <button
+                        class="btn btn-sm btn-primary dropdown-toggle"
+                        type="button"
+                        id="triggerId"
+                        data-bs-toggle="dropdown"
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                    >
+                        options
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="triggerId">
+                        <a class="dropdown-item" href="{{ url_for('dreamdb.update_record', record_id=record.id) }}">edit</a>
+                        <a class="dropdown-item" href="{{ url_for('dreamdb.create_note', record_id=record.id) }}">add note</a>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+<br>
+
+<div class="row row-cols-1 g-4">
+    <div class="col">
+        <div class="row row-cols-1 row-cols-md-2 g-4">
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-header"><h2>Details</h2></div>
+                    <div class="card-body">
+                        <p class="card-text m-0">{{ record.record|markdown }}</p>
+                        <table class="table">
+                            <tr>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                            <tr>
+                                <th>Date</th>
+                                <td class="text-end">
+                                    <p class="m-0">{{ record.record_date.strftime('%B %d, %Y') }}</p>
+                                    <p class="m-0">{{ record.record_date.strftime('%A') }}</p>
+                                </td>
+                            </tr>
+                            {% for h, d in [
+                                ('Time of day', 'time_of_day'),
+                                ('Sleep type', 'sleep_type'),
+                            ] %}
+                            {% set a = {d|replace('_', ''): record[d]} %}
+                            <tr>
+                                <th>{{ h }}</th>
+                                <td class="text-end">
+                                    {% if record[d] %}
+                                    <a class="defaultlink" href="{{ url_for('dreamdb.records', **a) }}">{{ record[d] }}</a>
+                                    {% else %}
+                                    <p class="defaulttag m-0">None</p>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-header"><h2>Tags</h2></div>
+                    <div class="card-body">
+                        <table class="table">
+                            {% for i in 'subject', 'descriptor', 'emotion' %}
+                            <tr>
+                                <th>{{ i|capitalize }}{{ 's' if record[i + 's']|length != 1 else '' }}</th>
+                                <td>{{ tagsRow('dreamdb.%s' % i, '%s_id' % i, record[i + 's']) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                </div></div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header"><h2>Notes</h2></div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>Count</th>
+                        <td class="text-end">{{ record.notes|length }}</td>
+                    </tr>
+                    <tr>
+                        <th>Latest</th>
+                        <td class="text-end">
+                            {% if record.notes %}
+                            {% set ln = (record.notes|sort(attribute='date_added'))[0] %}
+                            <a class="defaultlink" href="{{ url_for('dreamdb.note', note_id=ln.id) }}">{{ dateGrid(ln.date_added) }}</a>
+                            {% else %}
+                            None
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="card-footer text-muted">
+                <div class="row justify-content-end">
+                    <div class="col-auto">
+                        <a type="button" class="btn btn-sm btn-primary{{ ' disabled' if record.notes|length == 0 else '' }}" href="{{ url_for('dreamdb.notes', record=record.id) }}">
+                            See notes
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<br>
+
+{% endblock %}

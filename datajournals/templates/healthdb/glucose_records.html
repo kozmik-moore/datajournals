@@ -1,0 +1,30 @@
+{% extends 'healthdb/index.html' %}
+{% from 'healthdb/macros.html' import createSubrecordLayout %}
+
+{% block subtitle %}Glucose Records{% endblock %}
+
+{# Template to create section for individual records #}
+{% macro recordTemplate(record) %}
+<div class="row">
+    <div class="col ps-0">
+        <table class="table table-borderless">
+            <tbody>
+                <tr>
+                    <td>
+                        {{ record.glucose_record[0].measure ~ ' ' ~ record.glucose_record[0].units }}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endmacro %}
+
+{% block subcontent %}
+{{ createSubrecordLayout(
+    recordtype='glucose',
+    paginator=paginator,
+    count=count,
+    recordtemplate=recordTemplate
+) }}
+{% endblock %}

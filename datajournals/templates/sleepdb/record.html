@@ -1,0 +1,392 @@
+{% extends 'sleepdb/index.html' %}
+{% from 'sleepdb/macros.html' import daterange_stringify, timerange_stringify, dowrange_stringify, notesTable, tagRow, sleepRatingInfoTable %}
+{% from 'macros_sections.html' import createTagListSection %}
+
+{% block subtitle %}Session - {{ record.time_retire.strftime('%-m.%d.%y') }} ({{ record.time_retire.strftime('%a')[:2] }}){% endblock %}
+
+<!-- Contains button logic for one-click update of times in record -->
+{% macro buttonMenu() %}
+<li><a class="dropdown-item" href="{{ url_for('sleepdb.update_record', record_id=record.id) }}">edit</a></li>
+<li><a class="dropdown-item" href="{{ url_for('sleepdb.add_interruption', record_id=record.id) }}">add interruption</a></li>
+<li><a class="dropdown-item" href="{{ url_for('sleepdb.create_note', record_id=record.id) }}">add note</a></li>
+
+{% if not record.time_rise %}
+<li><hr class="dropdown-divider"></li>
+
+{% if not record.time_stop_sleep and not record.time_start_sleep %}
+
+{% set urlstring = url_for('sleepdb.set_sleep_time', record_id=record.id) %}
+<li><a type="button" class="dropdown-item" onclick="set_time('{{ urlstring }}')">set sleep time</a></li>
+
+{% set urlstring = url_for('sleepdb.set_wake_time', record_id=record.id) %}
+<li><a type="button" class="dropdown-item" onclick="set_time('{{ urlstring }}')">set wake time</a></li>
+
+{% elif not record.time_stop_sleep %}
+
+{% set urlstring = url_for('sleepdb.set_wake_time', record_id=record.id) %}
+<li><a type="button" class="dropdown-item" onclick="set_time('{{ urlstring }}')">set wake time</a></li>
+{% endif %}
+
+{% set urlstring = url_for('sleepdb.set_rise_time', record_id=record.id) %}
+<li><a type="button" class="dropdown-item" onclick="set_time('{{ urlstring }}')">set rise time</a></li>
+
+{% endif %}
+
+{% if not record.rating %}
+<li><hr class="dropdown-divider"></li>
+<li><a class="dropdown-item" href="{{ url_for('sleepdb.set_rating', record_id=record.id) }}">rate sleep quality</a></li>
+{% endif %}
+
+{% endmacro %}
+
+{% macro breakdownAwakeTime() %}
+<div class="row row-cols-2 align-items-center">
+    <div class="col">before sleep:</div>
+    <div class="col">{{ durations.before_sleep }}</div>
+    <div class="col">after sleep:</div>
+    <div class="col">{{ durations.after_sleep }}</div>
+</div>
+{% endmacro %}
+
+{% macro breakdownTimes() %}
+<div class="row row-cols-2 align-items-center">
+    {% for td, t in [
+        ('retired', record.time_retire),
+        ('asleep', record.time_start_sleep),
+        ('awake', record.time_stop_sleep),
+        ('arose', record.time_rise),
+        ] %}
+    <div class="col">{{ td }}:</div>
+    <div class="col">{{ t.strftime('%H:%M') if t else 'no data' }}</div>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+{% macro interruptionDurationRange(obj) %}
+{% set start, stop = obj.start, obj.stop  %}
+{% set tr = start.strftime('%H:%M - ') + stop.strftime('%H:%M') if start and stop else start.strftime('%H:%M - ') if stop else '' %}
+{% if not start and not stop %}
+{% set dr, wr = 'No start or stop time', '' %}
+{% elif not stop %}
+{% set dr, wr = start.strftime('%b %d, %Y - '), start.strftime('%a')  %}
+{% elif start.year != stop.year %}
+{% set dr, wr = start.strftime('%b %d, %Y - ') + stop.strftime('%b %d, %Y'), start.strftime('%a - ') + stop.strftime('%a') %}
+{% elif start.month != stop.month %}
+{% set dr, wr = start.strftime('%b %d - ') + stop.strftime('%b %d, %Y'), start.strftime('%a - ') + stop.strftime('%a') %}
+{% elif start.day != stop.day %}
+{% set dr, wr = start.strftime('%b %d - ') + stop.strftime('%d, %Y'), start.strftime('%a - ') + stop.strftime('%a') %}
+{% else %}
+{% set dr, wr = start.strftime('%b %d, %Y'), start.strftime('%a') %}
+{% endif %}
+<div class="row">
+    <div class="col">{{ dr }}</div>
+</div>
+<div class="row">
+    <div class="col">{{ wr }}</div>
+</div>
+<div class="row">
+    <div class="col">{{ tr }}</div>
+</div>
+{% endmacro %}
+
+{% block subcontent %}
+<div class="row justify-content-between align-items-sm-center">
+    <div class="col-auto">
+        <h1>Session{{ ' (in progress)' if not record.time_rise else '' }}</h1>
+    </div>
+    <div class="col-auto">
+        <div class="dropdown">
+            <button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                options
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                {{ buttonMenu() }}       
+            </ul>
+        </div>
+    </div>
+</div>
+<br>
+
+<div class="row row-cols-1 row-cols-sm-2 g-4">
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header"><h2>Times and durations</h2></div>
+            <div class="card-body">
+                <h3>Time</h3>
+                <table class="table">
+                    <tr>
+                        <th>Date{{ 's' if record.time_rise else '' }}</th>
+                        <td class="text-end">
+                            <div class="row justify-content-end align-items-center g-0">
+                                <div class="col-auto d-none d-md-block">
+                                    <a tabindex="0" class="btn btn-sm" data-bs-html="true" data-bs-placement="left" data-bs-toggle="popover" data-bs-trigger="focus" title="times" data-bs-content='{{ breakdownTimes() }}'>
+                                        <span class="text-primary-emphasis bi-info-circle"></span>
+                                    </a>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="row justify-content-end">
+                                        <div class="col-auto">{{ daterange_stringify(record) }}</div>
+                                    </div>
+                                    <div class="row justify-content-end">
+                                        <div class="col-auto">{{ timerange_stringify(record) }}</div>
+                                    </div>
+                                    <div class="row justify-content-end">
+                                        <div class="col-auto">{{ dowrange_stringify(record) }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-auto d-block d-md-none">
+                                    <a tabindex="0" class="btn btn-sm" data-bs-html="true" data-bs-placement="bottom" data-bs-toggle="popover" data-bs-trigger="focus" title="times" data-bs-content='{{ breakdownTimes() }}'>
+                                        <span class="text-primary-emphasis bi-info-circle"></span>
+                                    </a>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                <h3>Durations</h3>
+                <table class="table">
+                    <tr>
+                        <th>asleep</th>
+                        <td class="text-end">{{ durations.asleep }}</td>
+                    </tr>
+                    <tr>
+                        <th>interruptions</th>
+                        <td class="text-end">
+                            <div class="row justify-content-end align-items-center g-0">
+                                <div class="col-auto">{{durations.interruptions}}</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>asleep (adjusted)</th>
+                        <td class="text-end">{{durations.asleep_adjusted}}</td>
+                    </tr>
+                    <tr>
+                        <th>awake in bed</th>
+                        <td class="text-end">
+                            <div class="row justify-content-end align-items-center g-0">
+                                <div class="col-auto">{{durations.awake}}</div>
+                                <div class="col-auto">
+                                    <a tabindex="0" class="btn btn-sm pe-0" data-bs-toggle="popover" data-bs-placement="left" data-bs-trigger="focus" title="breakdown" data-bs-html="true" data-bs-content='{{ breakdownAwakeTime() }}'>
+                                        <span class="text-primary-emphasis bi-info-circle"></span>
+                                    </a>
+                                </div>
+                            </div></td>
+                    </tr>
+                    <tr>
+                        <th>in bed</th>
+                        <td class="text-end">{{durations.in_bed}}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="row row-cols-1 g-4">
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-header"><h2>Ratings</h2></div>
+                    <div class="card-body">
+                        <table class="table">
+                            <tr>
+                                <th class="align-middle">
+                                    <p class="mb-0">Sleep quality 
+                                        <span>
+                                            <!-- You can dismiss by clicking somewhere -->
+                                            <a
+                                                tabindex="0"
+                                                class="btn btn-sm"
+                                                data-bs-toggle="popover"
+                                                data-bs-html="true"
+                                                data-bs-trigger="focus"
+                                                title="Scale"
+                                                data-bs-content='{{ sleepRatingInfoTable() }}'
+                                                >
+                                                <span class="text-primary-emphasis bi-info-circle"></span>
+                                            </a>                                                                                        
+                                        </span>
+                                    </p>
+                                </th>
+                                <td class="text-end">{{ record.rating }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-header"><h2>Tags</h2></div>
+                    <div class="card-body">
+                        {% for tt, tobj in {'sensation': record.sensations, 'emotion': record.emotions, 'location': record.locations}.items() %}
+                        <h3>{{ tt|capitalize }}s</h3>
+                        <table class="table">
+                            <tr>
+                                <td>
+                                    {{ tagRow(tt, tobj, align='end', alignempty='end') }}
+                                </td>
+                            </tr>
+                        </table>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row pt-4">
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header" id="interruptionsheader"><h2>Interruptions</h2></div>
+            <div class="card-body">
+                {% if record.interruptions %}
+                <table class="table">
+                    <thead>
+                        <th class="col-8 col-md-7">Tags</th>
+                        <th class="col-2 text-start d-none d-md-table-cell">Times</th>
+                        <th class="col-1"></th>
+                        <th class="col-2 text-end d-none d-md-table-cell">Duration</th>
+                    </thead>
+                    <tbody>
+                        {% for i in interruptionspaginator %}
+                        <tr>
+                            <td>{{ tagRow('interruption', i.tags) }}</td>
+                            <td class="d-none d-md-table-cell">{{ interruptionDurationRange(i) }}</div></td>
+                            <td class="text-end">
+                                <a type="button" class="defaultlink" href="{{ url_for('sleepdb.update_interruption', interruption_id=i.id) }}">
+                                    <span class="bi-{{ 'pencil' if i.duration else 'stopwatch'}}{{ ' text-warning-emphasis' if not i.duration else '' }}"></span>
+                                </a>
+                            </td>
+                            <td class="text-end d-none d-md-table-cell">{{ i.duration|string + ' minutes' if i.duration is not none else 'Insufficient data' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% set prev_disabled = '' if interruptionspaginator.has_prev else 'disabled' %}
+                {% set next_disabled = '' if interruptionspaginator.has_next else 'disabled' %}
+                <div class="row">
+                    <div class="col">
+                        <nav aria-label="...">
+                            <ul class="pagination">
+                                {% set args = {'interruptionspage': 1, 'notespage': notespaginator.page} %}
+                                <li class="page-item">
+                                    <a class="page-link {{ prev_disabled }}" href="{{ url_for('sleepdb.record', record_id=record.id, **args)}}{{ '#interruptionsheader' }}">
+                                        <span class="d-none d-sm-inline">First</span>
+                                        <span class="d-inline d-sm-none bi-chevron-bar-left"></span>
+                                    </a>
+                                </li>
+                                {% set args = {'interruptionspage': interruptionspaginator.prev_num, 'notespage': notespaginator.page} %}
+                                    <li class="page-item">
+                                        <a class="page-link {{ prev_disabled }}" href="{{ url_for('sleepdb.record', record_id=record.id, **args) }}{{ '#interruptionsheader' }}">
+                                            <span class="d-none d-sm-inline">Prev</span>
+                                            <span class="d-inline d-sm-none bi-chevron-left"></span>
+                                        </a>
+                                    </li>
+                                {% set args = {'interruptionspage': interruptionspaginator.next_num, 'notespage': notespaginator.page} %}
+                                    <li class="page-item">
+                                        <a class="page-link {{ next_disabled }}" href="{{ url_for('sleepdb.record', record_id=record.id, **args) }}{{ '#interruptionsheader' }}">
+                                            <span class="d-none d-sm-inline">Next</span>
+                                            <span class="d-inline d-sm-none bi-chevron-right"></span>
+                                        </a>
+                                    </li>
+                                {% set args = {'interruptionspage': interruptionspaginator.pages, 'notespage': notespaginator.page} %}
+                                <li class="page-item">
+                                    <a class="page-link {{ next_disabled }}" href="{{ url_for('sleepdb.record', record_id=record.id, **args) }}{{ '#interruptionsheader' }}">
+                                        <span class="d-none d-sm-inline">Last</span>
+                                        <span class="d-inline d-sm-none bi-chevron-bar-right"></span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                    <div class="col-auto">
+                        {% if interruptionspaginator.pages %}
+                        {{ interruptionspaginator.page }} of {{ interruptionspaginator.pages }}
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-center">No interruptions</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row pt-4">
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header">
+                <h2>Notes</h2>
+            </div>
+            <div class="card-body">
+                {% if record.notes %}
+                {{ notesTable(notespaginator, displaysession=False) }}
+                {% set prev_disabled = '' if notespaginator.has_prev else 'disabled' %}
+                {% set next_disabled = '' if notespaginator.has_next else 'disabled' %}
+                <div class="row">
+                    <div class="col">
+                        <nav aria-label="...">
+                            <ul class="pagination">
+                                {% set args = {'notespage': 1, 'interruptionspage': interruptionspaginator.page} %}
+                                <li class="page-item">
+                                    <a class="page-link {{ prev_disabled }}" href="{{ url_for('sleepdb.record', record_id=record.id, **args)}}{{ '#notestable' }}">
+                                        <span class="d-none d-sm-inline">First</span>
+                                        <span class="d-inline d-sm-none bi-chevron-bar-left"></span>
+                                    </a>
+                                </li>
+                                {% set args = {'notespage': notespaginator.prev_num, 'interruptionspage': interruptionspaginator.page} %}
+                                    <li class="page-item">
+                                        <a class="page-link {{ prev_disabled }}" href="{{ url_for('sleepdb.record', record_id=record.id, **args) }}{{ '#notestable' }}">
+                                            <span class="d-none d-sm-inline">Prev</span>
+                                            <span class="d-inline d-sm-none bi-chevron-left"></span>
+                                        </a>
+                                    </li>
+                                {% set args = {'notespage': notespaginator.next_num, 'interruptionspage': interruptionspaginator.page} %}
+                                    <li class="page-item">
+                                        <a class="page-link {{ next_disabled }}" href="{{ url_for('sleepdb.record', record_id=record.id, **args) }}{{ '#notestable' }}">
+                                            <span class="d-none d-sm-inline">Next</span>
+                                            <span class="d-inline d-sm-none bi-chevron-right"></span>
+                                        </a>
+                                    </li>
+                                {% set args = {'notespage': notespaginator.pages, 'interruptionspage': interruptionspaginator.page} %}
+                                <li class="page-item">
+                                    <a class="page-link {{ next_disabled }}" href="{{ url_for('sleepdb.record', record_id=record.id, **args) }}{{ '#notestable' }}">
+                                        <span class="d-none d-sm-inline">Last</span>
+                                        <span class="d-inline d-sm-none bi-chevron-bar-right"></span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                    <div class="col-auto">
+                        {% if notespaginator.pages %}
+                        {{ notespaginator.page }} of {{ notespaginator.pages }}
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-center">No notes</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+<br>
+
+<script>
+    function set_time(doc){
+        var d = new Date();
+        var time = d.getTime() / 1000;
+        var newdoc = doc + '?time=' + time;
+        window.location.assign(newdoc);
+        return true;
+    }
+</script>
+
+<script>
+    const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
+    const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl))
+    const popover = new bootstrap.Popover('.popover-dismiss', {
+        trigger: 'focus'
+    })
+</script>
+{% endblock %}

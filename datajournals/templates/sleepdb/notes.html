@@ -1,0 +1,17 @@
+{% extends 'sleepdb/index.html' %}
+{% from 'sleepdb/macros.html' import notesTable %}
+
+{% block subtitle %}Notes{% endblock %}
+
+{% block subcontent %}
+
+<div class="row">
+    <div class="col">
+        <h1>Notes</h1>
+    </div>
+</div>
+<br>
+{{ notesTable(paginator) }}
+{{ basicpaginator('sleep', 'notes', paginator, urlfragment='notestable') }}
+
+{% endblock %}

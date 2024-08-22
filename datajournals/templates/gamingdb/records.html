@@ -1,0 +1,20 @@
+{% extends 'gamingdb/index.html' %}
+{% from 'gamingdb/macros.html' import recordsTable %}
+
+{% block subtitle %}Gaming Sessions{% endblock %}
+
+{% macro headerSection() %}
+<h1>Sessions</h1>
+{% endmacro %}
+
+{% block subcontent %}
+
+{{ recordslayout(
+    databasename='gaming', 
+    recordsection = recordsTable(paginator=paginator, displaygame=True, displaytags=True), 
+    paginator=paginator,
+    headersection=headerSection()
+    ) 
+}}
+
+{% endblock %}

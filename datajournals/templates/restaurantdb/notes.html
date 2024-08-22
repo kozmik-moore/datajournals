@@ -1,0 +1,146 @@
+{% extends 'restaurantdb/index.html' %}
+{% from 'restaurantdb/macros.html' import dateGrid %}
+
+{% block title %}Restaurant Notes{% endblock %}
+
+{% block subcontent %}
+
+{% macro createRecordsSection() %}
+<table class="table">
+    <thead>
+        <tr>
+            <th>Note</th>
+            <th>Restaurant</th>
+            <th>Date Added (UTC)</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for note in paginator %}
+        <tr>
+            <td>
+                <div class="row">
+                    <div class="col-auto">
+                        {{ note.note | markdown }}
+                    </div>
+                </div>
+                {% if note.important %}
+                <div class="row">
+                    <div class="col-auto">
+                        {{ badge() }}
+                    </div>
+                </div>
+                {% endif %}
+            </td>
+            <td>
+                {% if note.record %}
+                <a href="{{ url_for('restaurantdb.record', record_id=note.record.id)}}">{{ note.record.name }}</a>
+                {% else %}
+                No record
+                {% endif %}
+            </td>
+            <td>{{ note.date_added.strftime('%a, %b %d, %Y %H:%M') }}</td>
+            <td>
+                <div class="row">
+                    <div class="col-auto pe-1">
+                        <a class="text-decoration-none" href="{{ url_for('restaurantdb.note', note_id=note.id)}}">view</a>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endmacro %}
+
+<div class="row justify-content-between align-items-center">
+    <div class="col-auto"><h1>Notes</h1></div>
+</div>
+<br>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th class="col-6 col-sm-3">Date added</th>
+            <th class="text-end">Restaurant</th>
+            <th class="col-1 text-center d-none d-sm-table-cell">Important</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for n in paginator %}
+        <tr>
+            <td>
+                <a class="defaultlink" href="{{ url_for('restaurantdb.note', note_id=n.id) }}">
+                    <span class="d-none d-sm-inline">{{ dateGrid(n.date_added, multiline=False) }}</span>
+                    <span class="d-inline d-sm-none">{{ dateGrid(n.date_added) }}</span>
+                </a>
+            </td>
+            <td class="text-end">
+                {% if n.record %}
+                <a class="defaultlink" href="{{ url_for('restaurantdb.record', record_id=n.record.id) }}">
+                    {{ n.record.name }}
+                </a>
+                {% else %}
+                <p class="defaulttag mb-0">None</p>
+                {% endif %}
+            </td>
+            <td class="text-center d-none d-sm-table-cell">{{ checkIcon(n.important) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{# set 'disabled' keywords for navigation buttons, as necessary #}
+{% set prev_disabled = '' if paginator.has_prev else 'disabled' %}
+{% set next_disabled = '' if paginator.has_next else 'disabled' %}
+
+{% set args={} %}
+{% if record %}
+{% set args = dict(args, **{'restaurant': record.id}) %}
+{% endif %}
+
+<div class="row align-items-top">
+    <div class="col">
+        <nav aria-label="...">
+            <ul class="pagination">
+                {% set args = dict(args, **{'page': 1}) %}
+                <li class="page-item">
+                    <a class="page-link {{ prev_disabled }}" href="{{ url_for('restaurantdb.notes', **args)}}">
+                        <span class="d-none d-sm-inline">First</span>
+                        <span class="d-inline d-sm-none bi-chevron-bar-left"></span>
+                    </a>
+                </li>
+                {% set args = dict(args, **{'page': paginator.prev_num}) %}
+                <li class="page-item">
+                    <a class="page-link {{ prev_disabled }}" href="{{ url_for('restaurantdb.notes', **args) }}">
+                        <span class="d-none d-sm-inline">Prev</span>
+                        <span class="d-inline d-sm-none bi-chevron-left"></span>
+                    </a>
+                </li>
+                {% set args = dict(args, **{'page': paginator.next_num}) %}
+                <li class="page-item">
+                    <a class="page-link {{ next_disabled }}" href="{{ url_for('restaurantdb.notes', **args) }}">
+                        <span class="d-none d-sm-inline">Next</span>
+                        <span class="d-inline d-sm-none bi-chevron-right"></span>
+                    </a>
+                </li>
+                {% set args = dict(args, **{'page': paginator.pages}) %}
+                <li class="page-item">
+                    <a class="page-link {{ next_disabled }}" href="{{ url_for('restaurantdb.notes', **args) }}">
+                        <span class="d-none d-sm-inline">Last</span>
+                        <span class="d-inline d-sm-none bi-chevron-bar-right"></span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    {% if pagenumber %}
+    <div class="col-auto">
+        {% if paginator.pages %}
+        {{ paginator.page }} of {{ paginator.pages }}
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'restaurantdb/index.html' %}
+{% from 'restaurantdb/macros.html' import tagRow %}
+
+{% block title %}Restaurants{% endblock %}
+
+{% macro tagCell(tags) %}
+<div class="row g-3">
+    {% for t in tags|sort(attribute='tag') %}
+    <div class="col-auto"><p class="defaulttag mb-0">{{ t.tag }}</p></div>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+{% block subcontent %}
+
+<div class="row">
+    <div class="col-auto"><h1>Restaurants</h1></div>
+</div>
+<br>
+<table class="table">
+    <thead>
+        <tr>
+            <th class="col-sm-3">Name</th>
+            <th class="d-none d-sm-table-cell">Tags</th>
+            <th class="col-1 text-end text-sm-center">Avoid?</th>
+            <th class="col-1 text-center d-none d-sm-table-cell">Has visits</th>
+            <th class="col-1 text-center d-none d-sm-table-cell">Has notes</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in paginator %}
+        <tr>
+            <td><a class="defaultlink" href="{{ url_for('restaurantdb.record', record_id=r.id) }}">{{ r.name }}</a></td>
+            <td class="d-none d-sm-table-cell">{{ tagCell(r.tags) }}</td>
+            <td class="text-end text-sm-center">{{ checkIcon(r.avoid, colortrue='danger', iconfalse='') }}</td>
+            <td class="text-center d-none d-sm-table-cell">{{ checkIcon(r.visits) }}</td>
+            <td class="text-center d-none d-sm-table-cell">{{ checkIcon(r.notes) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{{ basicpaginator('restaurant', 'records', paginator) }}
+
+{% endblock %}

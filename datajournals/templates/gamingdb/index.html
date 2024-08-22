@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+{% from 'gamingdb/macros.html' import descriptiveStatsTable, tagRow, popoverContentTags, dateGrid, datespanGrid %}
+
+{% block title %}GamingDB - {% block subtitle %}Dashboard{% endblock %}{% endblock %}
+
+{% macro gameRow(games, align='end', alignempty='end') %}
+{% if games %}
+<div class="row justify-content-{{ align }} g-3">
+    {% for game in games|sort(attribute='name') %}
+    <div class="col-auto">
+        <a class="defaultlink" href="{{ url_for('gamingdb.game', game_id=game.id) }}">{{ game.name }}</a>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="row justify-content-{{ alignempty }}">
+    <div class="col-auto"><p class="defaulttag my-0">None</p></div>
+</div>
+{% endif %}
+{% endmacro %}
+
+{% macro popoverContentGames(object) %}
+<div class="row row-cols-3 g-2">
+    {% for g, c, p in object %}
+    <div class="col-4"><a class="defaultlink" href="{{ url_for('gamingdb.game', game_id=g.id) }}">{{ g.name }}</a></div>
+    <div class="col-5">
+        <div class="row justify-content-end">
+            <div class="col-auto">{{ c }}</div>
+        </div>
+    </div>
+    <div class="col-3">
+        <div class="row justify-content-end">
+            <div class="col-auto">({{ p }})</div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+{% block content %}
+
+<!-- DB Navbar -->
+<div class="'container">
+    <div class="row row-cols-2 align-items-center">
+        <div class="col gx-0">
+            <nav class="nav">
+                <ul class="nav">
+                    {% for n, e in [
+                        ('Dash', 'index'),
+                        ('Sessions', 'records'),
+                        ('Notes', 'notes'),
+                        ('Games', 'games'),
+                    ] %}
+                    {% set urlstr = 'gamingdb.' + e %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for(urlstr) }}">{{ n }}</a>
+                    </li>
+                    {% endfor %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Tags</a>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="{{ url_for('gamingdb.emotions') }}">Emotions</a>
+                            <a class="dropdown-item" href="{{ url_for('gamingdb.interruptions') }}">Interruptions</a>
+                        </div>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        <div class="col">
+            <div class="row g-2 justify-content-end">
+                <div class="col-auto">
+                    <a type="button" class="btn btn-primary btn-sm" href="{{ url_for('gamingdb.create_record')}}">Add session</a>
+                </div>
+                <div class="col-auto">
+                    <a type="button" class="btn btn-primary btn-sm" href="{{ url_for('gamingdb.create_note')}}">Add note</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr>
+
+{% block subcontent %}
+
+<!-- Header Info -->
+<div class="row justify-content-between">
+    <div class="col-auto">
+        <h1>Dashboard</h1>
+    </div>
+</div>
+<br>
+
+<div class="row row-cols-1 g-4">
+    <div class="col">
+        <div class="row row-cols-1 row-cols-sm-2 g-4">
+        
+            <!-- Records Data -->
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-header bg-muted">
+                        <h2 class="">Sessions</h2>
+                    </div>
+                    <div class="card-body">
+                        <h3>Latest</h3>
+                        {% if latest %}
+                        <table class="table">
+                            <tr>
+                                <th>date</th>
+                                <td class="text-end">
+                                    <a class="defaultlink" href="{{ url_for('gamingdb.record', record_id=latest.id) }}">{{ datespanGrid(latest) }}</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>game</th>
+                                <td class="text-end">
+                                    <a class="defaultlink" href="{{ url_for('gamingdb.record', record_id=latest.id) }}">{{ latest.game.name }}</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>complete?</th>
+                                <td class="text-end">{{ checkIcon(latest.start_time and latest.stop_time) }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <th></th>
+                                <td class="text-end">None</td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                        <h3>Counts</h3>
+                        <table class="table">
+                            {% for i in [
+                                'complete',
+                                'incomplete'    
+                            ] %}
+                            <tr>
+                                <th>{{ i }}</th>
+                                <td class="text-end">{{ basicstats[i] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                        <div class="row align-items-center g-1">
+                            <div class="col-auto">
+                                <h3>Durations</h3>
+                            </div>
+                            {% if first %}
+                            <div class="col-auto">
+                                <a
+                                    tabindex="0"
+                                    class="btn btn-sm"
+                                    data-bs-toggle="popover"
+                                    data-bs-trigger="focus"
+                                    data-bs-html="true"
+                                    title="First entry"
+                                    data-bs-content='{{ "Since %s" % first.start_time.strftime("%b %d, %Y, %H:%M (%a)") }}'
+                                >
+                                    {{ infoButton(title='Since %s' % first.start_time.strftime('%b %d, %Y, %H:%M (%a)')) }}
+                                </a>                                
+                            </div>
+                            {% endif %}
+                        </div>
+                        {{ descriptiveStatsTable(durationstats, includesum=True) }}
+                        <h3>Ratings</h3>
+                        {{ descriptiveStatsTable(ratingstats) }}
+                    </div>
+                </div>
+            </div>
+        
+            <!-- Games data -->
+            <div class="col">
+                <div class="row row-cols-1 g-4">
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-header"><h2>Games</h2></div>
+                            <div class="card-body">
+                                <h3>Counts</h3>
+                                <table class="table">
+                                    <tr>
+                                        <td class="text-end">{{ gamestats.counts.gamecount }}</td>
+                                    </tr>
+                                </table>
+                                <h3>Most played</h3>
+                                {% for h in [
+                                    'counts', 'durations',
+                                ] %}
+                                {% set so = gamestats[h].mostcommon %}
+                                <h4>by session {{ h }}</h4>
+        
+                                {% macro dD() %}
+                                <div class="row g-1 justify-content-end align-items-center">
+                                    <div class="col-auto">{{ '%s (%s)' % (so.count|string, so.proportion|string) }}</div>
+                                    <div class="col-auto">
+                                        {{ dataPopover(popoverContentGames(gamestats[h].all), title='Session ' + h + ' - all games', tooltip='All games') }}
+                                    </div>
+                                </div>
+                                {% endmacro %}
+        
+                                <table class="table">
+                                    {% for h1, d in [
+                                        ('games' if so.games|length != 1 else 'game', gameRow(so.games)),
+                                        (h[:-1] + ' total', dD()),
+                                    ] %}
+                                    <tr>
+                                        <th>{{ h1 }}</th>
+                                        <td class="text-end">{{ d }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </table>
+                                {% endfor %}
+                            </div>
+                        </div>        
+                    </div>
+                    
+                    {% for h, so in [
+                        ('emotions', emotionstats),
+                        ('interruptions', interruptionstats),
+                    ] %}
+                    {% set som = so.mostcommon %}
+                    <!-- {{ h|capitalize }} data -->
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-header"><h2>{{ h|capitalize }}</h2></div>
+                            <div class="card-body">
+                                <table class="table">
+                                    <tr>
+                                        <th>most common</th>
+                                        <td class="text-end">
+                                            <div class="row g-1 align-items-center justify-content-end">
+                                                <div class="col-auto">{{ tagRow(h[:-1], som.tags, align='end', alignempty='end') }}</div>
+                                                <div class="col-1">{{ dataPopover(popoverContentTags(h[:-1], so.all), title='Use counts - ' + h, tooltip='All ' + h) }}</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>                
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="row g-4">
+            <!-- Notes data -->
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-header"><h2>Notes</h2></div>
+                    <div class="card-body">
+                        <h3>Counts</h3>
+                        <table class="table">
+                            {% for c, d in [
+                                ('important', 'notes marked important'),
+                                ('records', 'notes for records'),
+                                ('games', 'notes for games'),
+                            ] %}
+                            <tr>
+                                <th>{{ d }}</th>
+                                <td class="text-end">{{ notestats[c].count }} ({{ notestats[c].proportion }})</td>
+                            </tr>
+                            {% endfor %}
+                            <tr>
+                                <th>all notes</th>
+                                <td class="text-end">{{ notestats.count }}</td>
+                            </tr>
+                        </table>
+                        <h3>Most annotated game</h3>
+                        {% set so = notestats.games %}
+                        <table class="table">
+                            <tr>
+                                <th>{{ 'games' if so.mostcommon.tags|length != 1 else 'game' }}</th>
+                                <td>{{ gameRow(so.mostcommon.tags) }}</td>
+                            </tr>
+                            <tr>
+                                <th>count</th>
+                                <td class="text-end">
+                                    <div class="row g-1 justify-content-end align-items-center">
+                                        <div class="col-auto">{{ so.mostcommon.count }} ({{ so.mostcommon.proportion }})</div>
+                                        <div class="col-auto">{{ dataPopover(popoverContentGames(so.all), title='Note counts - all games', tooltip='All games') }}</div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                        <h3>Dates</h3>
+                        <table class="table">
+                            {% for h in ['latest', 'earliest',] %}
+                            {% set n = notestats.dates[h] %}
+                            <tr>
+                                <th>{{ h }}</th>
+                                <td class="text-end"><a class="defaultlink" href="{{ url_for('gamingdb.note', note_id=n.id) }}">{{ dateGrid(n.date_added, multiline=False) }}</a></td>
+                            </tr>
+                            {% endfor %}
+                            <th>mean time to creation</th>
+                            <td>
+                                <div class="row g-2 justify-content-end align-items-center">
+                                    <div class="col-auto">{{ notestats.dates.diffmean }}</div>
+                                    <div class="col-auto">({{ notestats.dates.diffstd }})</div>
+                                </div>
+                            </td>
+                        </table>
+                    </div>
+                </div>        
+            </div>
+        </div>
+    </div>
+</div>
+<br>
+
+{{ popoverScript() }}
+
+{% endblock %}
+
+{% endblock %}

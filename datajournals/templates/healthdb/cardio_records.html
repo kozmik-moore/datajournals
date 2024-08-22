@@ -1,0 +1,30 @@
+{% extends 'healthdb/index.html' %}
+{% from 'healthdb/macros.html' import createSubrecordLayout %}
+
+{% block subtitle %}Cardio Records{% endblock %}
+
+{# Template to create section for individual records #}
+{% macro recordTemplate(record) %}
+<div class="row">
+    <div class="col-auto ps-0">
+        <table class="table table-borderless">
+            <tbody>
+                <tr>
+                    <td>{{ 'Systolic: ' ~ record.cardio_record[0].systolic }}</td>
+                    <td>{{ 'Diastolic: ' ~ record.cardio_record[0].diastolic }}</td>
+                    <td>{{ 'Heart rate: ' ~ record.cardio_record[0].heart_rate }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endmacro %}
+
+{% block subcontent %}
+{{ createSubrecordLayout(
+    recordtype='cardio',
+    paginator=paginator,
+    count=count,
+    recordtemplate=recordTemplate
+) }}
+{% endblock %}

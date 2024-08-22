@@ -1,0 +1,55 @@
+{% extends 'healthdb/index.html' %}
+
+{% block subtitle %}Note: {{ note.date_added.strftime('%m/%d/%Y, %H%M') }}{% endblock %}
+
+{% macro createRecordSection() %}
+<div class="row justify-content-between">
+    <div class="col-auto">
+        <h2>Record</h2>
+    </div>
+{% if note and note.record %}
+    <div class="col-auto">
+        <h2><a type="button" class="btn btn-primary" href="{{ url_for('healthdb.record', record_id=note.record.id)}}">Go to record</a></h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col">
+        {{ note.record.record|markdown }}
+    </div>
+</div>
+<div class="row">
+    {% for type in ['glucose_record', 'cardio_record', 'pain_record', 'weight_record'] %}
+    {% if note.record[type] %}
+    <div class="col-auto pe-0">
+        {{ badge(text=type|replace('_', ' '), bgcolor='success', txtcolor='light', opacity='85') }}
+    </div>
+    {% endif %}
+    {%endfor%}
+</div>
+
+{% else %}
+
+    <div class="col-auto">
+        <h2><a type="button" class="btn btn-primary disabled" href="#">Go to record</a></h2>
+    </div>
+</div>
+
+<br>
+<hr>
+<div class="row justify-content-center">
+    <div class="col-auto">
+        No Record
+    </div>
+</div>
+<hr>
+{% endif %}
+{% endmacro %}
+
+{% block subcontent %}
+{{ notelayout(
+    databasename='health',
+    note=note,
+    recordsection=createRecordSection()
+) }}
+{% endblock %}

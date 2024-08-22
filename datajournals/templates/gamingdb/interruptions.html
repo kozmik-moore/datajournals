@@ -1,0 +1,41 @@
+{% extends 'gamingdb/index.html' %}
+
+{% block subtitle %}Tags - interruptions{% endblock %}
+
+{% block subcontent %}
+<div class="row justify-content-between align-items-center">
+    <div class="col">
+        <h1>Tags - interruptions</h1>
+    </div>
+    <div class="col">
+        <form class="form-inline" action="{{ url_for('gamingdb.search') }}" method="get">
+            <div class="row justify-content-end align-items-center">
+                <div class="col-auto pb-2 pb-sm-0">
+                    <input class="form-control text-start" type="search", name="interruptions" placeholder="Filter..." autocomplete="off" required>
+                </div>
+                <div class="col-auto ps-1">
+                    <button class="btn btn-sm btn-primary">Submit</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<br>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th class="text-end">Usage count</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for interruption in paginator %}
+        <tr>
+            <td><a class="text-decoration-none" href="{{ url_for('gamingdb.interruption', interruption_id=interruption.id) }}">{{ interruption.tag }}</a></td>
+            <td class="text-end">{{ interruption.session_interruptions|length }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{{ basicpaginator(databasename='gaming', view='interruptions', paginator=paginator) }}
+{% endblock %}

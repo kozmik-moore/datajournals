@@ -1,0 +1,126 @@
+{% extends 'dreamdb/index.html' %}
+
+{% block subtitle %}{{ 'Add' if request.endpoint == 'dreamdb.create_record' else 'Edit' }} dream{% endblock %}
+
+{% block subcontent %}
+<div class="row justify-content-between align-items-center">
+    <div class="col">
+        <h1>{{ 'Add' if request.endpoint == 'dreamdb.create_record' else 'Edit' }} dream</h1>
+    </div>
+    {% if request.endpoint == 'dreamdb.update_record' %}
+    <div class="col-auto">
+        <button
+            type="button"
+            class="btn btn-outline-danger btn-sm"
+            data-bs-toggle="modal"
+            data-bs-target="#modalId"
+        >
+            delete
+        </button>
+        
+        <div
+            class="modal fade"
+            id="modalId"
+            tabindex="-1"
+            data-bs-backdrop="static"
+            data-bs-keyboard="false"
+            
+            role="dialog"
+            aria-labelledby="modalTitleId"
+            aria-hidden="true"
+        >
+            <div
+                class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm"
+                role="document"
+            >
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTitleId">
+                            Delete dream?
+                        </h5>
+                    </div>
+                    <div class="modal-body"><p class="text-center">Are you sure you want to delete this dream?</p></div>
+                    <div class="modal-footer">
+                        <a type="button" class="btn btn-danger btn-sm" href="{{ url_for('dreamdb.delete_record', record_id=record.id) }}">Delete</a>
+                        <button
+                            type="button"
+                            class="btn btn-secondary btn-sm"
+                            data-bs-dismiss="modal"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+<br>
+
+{{ bootstrapTagsScript() }}
+
+<form method="POST" action="">
+    {{ form.csrf_token }}
+
+    <div class="row row-cols-1 row-cols-md-2 gx-4 gy-2">
+        <div class="col">
+            <div class="row row-cols-1 g-2 h-100">
+                <div class="col">
+                    {{ form.record(class='form-control', rows=10, placeholder='Describe your dream...') }}
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="row row-cols-1 g-2">
+                <div class="col">
+                    {{ form.record_date(class='form-control') }}
+                </div>
+                <div class="col">
+                    {{ form.time_of_day(class='form-control', placeholder='Time of day...') }}
+                </div>
+                <div class="col">
+                    {{ form.sleep_type(class='form-control', placeholder='Type of sleep...') }}
+                </div>
+                <div class="col">
+                    {{ form.subjects(class='form-select', placeholder='What was the dream about?') }}
+                </div>
+                <div class="col">
+                    {{ form.descriptors(class='form-select', placeholder='What kind of dream?') }}
+                </div>
+                <div class="col">
+                    {{ form.emotions(class='form-select', placeholder='How do you feel?') }}
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="row justify-content-between align-items-center">
+                <div class="col-auto">
+                    <div class="row g-2">
+                        <div class="col-auto">{{ form.submit(class="btn btn-primary") }}</div>
+                        <div class="col-auto">
+                            <a type="button" class="btn btn-primary" href="{{ request.referrer }}">Cancel</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <div class="row g-2">
+                        <div class="col-auto">
+                            {{ form.add_note(class='form-check-input') }}
+                        </div>
+                        <div class="col-auto">
+                            {{ form.add_note.label(class='form-label') }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
+</form>
+<br>
+
+<script src="/static/datefunctions.js"></script>
+<script>
+    setDate('record_date')
+</script>
+{% endblock %}

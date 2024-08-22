@@ -1,0 +1,100 @@
+{% extends 'dreamdb/index.html' %}
+
+{% block subtitle %}{{ '%s: %s' % (tagtype[:-1]|capitalize, tag.tag) }}{% endblock %}
+
+{% block subcontent %}
+
+{% set meanstats = [
+    ('Count', 'count'),
+    ('Mean', 'mean'),
+    ('Standard dev.', 'std'),
+] %}
+{% set medianstats = [
+    ('Count', 'count'),
+    ('Minimum', 'min'),
+    ('1st quartile', 'qtr1'),
+    ('Median', 'med'),
+    ('3rd quartile', 'qtr3'),
+    ('Maximum', 'max'),
+] %}
+
+{% macro localDataPopoverContents(stats) %}
+<div class="row row-cols-2 g-2 justify-content-between">
+    {% for s, i in stats %}
+    <div class="col-6 align-items-end">{{ s }}</div>
+    <div class="col-6"><p class="text-end mb-0">{{ tagstats.all[i] }}</p></div>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+<div class="row align-items-center justify-content-between">
+    <div class="col">
+        <h1>{{ tagtype[:-1]|capitalize }}</h1>
+    </div>
+    <div class="col-auto">
+        <a class="btn btn-primary btn-sm" href="{{ url_for('dreamdb.update_tag', tagtype=tagtype, tag_id=tag.id) }}">edit</a>
+    </div>
+</div>
+<br>
+
+<div class="row row-cols-1 row-cols-sm-2 g-4">
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header"><h2>Details</h2></div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>Tag</th>
+                        <td class="text-end">{{ tag.tag }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card">
+            <div class="card-header"><h2>Stats</h2></div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>Use count</th>
+                        <td class="text-end">{{ tagstats.usecount }}</td>
+                    </tr>
+                    <tr>
+                        <th>Mean time to use</th>
+                        <td>
+                            <div class="row g-1 justify-content-end align-items-center">
+                                <div class="col-auto"><p class="text-end m-0">{{ tagstats.all.mean }}</p></div>
+                                <div class="col-auto">{{ dataPopover(localDataPopoverContents(meanstats)) if tagstats.all.count not in [0, 1] else 'Insufficient counts' }}</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Median time to use</th>
+                        <td>
+                            <div class="row g-1 justify-content-end align-items-center">
+                                <div class="col-auto"><p class="text-end m-0">{{ tagstats.all.med }}</p></div>
+                                <div class="col-auto">{{ dataPopover(localDataPopoverContents(medianstats)) if tagstats.all.count not in [0, 1] else 'Insufficient counts' }}</div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="card-footer text-muted">
+                <div class="row g-2 justify-content-end">
+                    {% set a = {tagtype[:-1]: tag.tag} %}
+                    <div class="col-auto">
+                        {{ timeDataModal(tagstats.timedata, title='Time between use for the last...') }}
+                    </div>
+                    <div class="col-auto">
+                        <a class="btn btn-sm btn-primary" href="{{ url_for('dreamdb.records', **a) }}">See dream records</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<br>
+
+{{ popoverScript() }}
+{% endblock %}

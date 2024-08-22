@@ -1,0 +1,69 @@
+{% extends 'gamingdb/index.html' %}
+
+{% block subtitle %}Add Record{% endblock %}
+
+{% block subcontent %}
+<div class="row">
+    <div class="col">
+        <h1>Add session</h1>
+    </div>
+</div>
+<br>
+
+{{ bootstrapTagsScript() }}
+
+<form method="POST" action="">
+    {{ form.csrf_token }}
+
+    <div class="row row-cols-1 g-4">
+        <div class="col">
+            <div class="row row-cols-1 row-cols-sm-2 g-2 g-sm-4">
+                <div class="col">
+                    <!-- Time start -->
+                    <div class="row">
+                        <div class="col">
+                            {{ form.start_time.label(class='form-label') }}
+                            {{ form.start_time(class='form-control') }}
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <!-- Game name -->
+                    <div class="row">
+                        <div class="col">
+                            {{ form.game.label(class='form-label') }}
+                            {{ form.game(class='form-select') }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <!-- "Add note" check -->
+            <div class="row g-2">
+                <div class="col-auto">
+                    {{ form.add_note(class='form-check-input') }}
+                </div>
+                <div class="col-auto">
+                    {{ form.add_note.label(class='form-check-label') }}
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <!-- Submit and cancel buttons -->
+            <div class="row g-2">
+                <div class="col-auto">{{ form.submit(class="btn btn-primary") }}</div>
+                <div class="col-auto">
+                    <a type="button" class="btn btn-primary" href="{{ url_for('gamingdb.records') }}">Cancel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br>
+</form>
+
+<script src="{{ url_for('static', filename='datefunctions.js') }}"></script>
+<script>
+    setDatetime('start_time')
+</script>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends 'dreamdb/index.html' %}
+
+{% block subtitle %}Edit Record{% endblock %}
+
+{% block subcontent %}
+<div class="row justify-content-between">
+    <div class="col-auto">
+        <h1>Edit Record: {{ record.record_date.strftime('%b %d, %Y') }}</h1>
+    </div>
+    <div class="col-auto">
+        <form method="POST" action="{{ url_for('dreamdb.delete_record', record_id=record.id) }}">
+            <input type="submit" class="btn btn-outline-secondary" value="Delete" onclick="return confirm('Are you sure you want to delete this record?')">
+        </form>
+    </div>
+</div>
+<br>
+
+<script type="module">
+    import Tags from "https://cdn.jsdelivr.net/gh/lekoala/bootstrap5-tags@master/tags.js";
+    Tags.init("select", {separator: '|,|', addOnBlur:'true', allowNew: 'true', allowClear: 'false'});
+</script>
+
+<form method="POST" action="">
+    {{ form.csrf_token }}
+
+    <!-- Record -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.record.label(class='form-label') }}:
+            {{ form.record(class='form-control', rows=10, placeholder='Add a record...') }}
+        </div>
+    </div>
+
+    <!-- Record date -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.record_date.label(class='form-label') }}:
+            {{ form.record_date(class='form-control') }}
+        </div>
+    </div>
+
+    <!-- Time of day -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.time_of_day.label(class='form-label') }}:
+            {{ form.time_of_day(class='form-control') }}
+        </div>
+    </div>
+
+    <!-- Sleep type -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.sleep_type.label(class='form-label') }}:
+            {{ form.sleep_type(class='form-control') }}
+        </div>
+    </div>
+
+    <!-- Subject Tags -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.subjects.label(class='form-label') }}
+            {{ form.subjects(class='form-select') }}
+        </div>
+    </div>
+
+    <!-- Descriptor Tags -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.descriptors.label(class='form-label') }}
+            {{ form.descriptors(class='form-select') }}
+        </div>
+    </div>
+
+    <!-- Emotion Tags -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.emotions.label(class='form-label') }}
+            {{ form.emotions(class='form-select') }}
+        </div>
+    </div>
+
+    <!-- "Add note" check -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.add_note(class='form-check-input') }}
+            {{ form.add_note.label(class='form-label') }}
+        </div>
+    </div>
+
+    <br>
+
+    <!-- submit/cancel buttons -->
+    <div class="row">
+        <div class="col-auto pe-1">{{ form.submit(class="btn btn-primary") }}</div>
+        <div class="col-auto px-0">
+            <a type="button" class="btn btn-primary" href="{{ url_for('dreamdb.record', record_id=record.id) }}">Cancel</a>
+        </div>
+    </div>
+    
+</form>
+{% endblock %}

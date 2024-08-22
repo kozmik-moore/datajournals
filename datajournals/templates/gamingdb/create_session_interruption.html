@@ -1,0 +1,136 @@
+{% extends 'gamingdb/index.html' %}
+{% from 'gamingdb/macros.html' import stringify_datespan, stringify_timespan, stringify_dowspan, noteSessionCard, noteGameCard %}
+
+{% block subtitle %}Add Interruption{% endblock %}
+
+{% block subcontent %}
+<div class="row">
+    <div class="col">
+        <h1>{{ 'Add' if 'create' in request.endpoint else 'Update'}} session interruption</h1>
+    </div>
+</div>
+<br>
+
+<script type="module">
+    import Tags from "https://cdn.jsdelivr.net/gh/lekoala/bootstrap5-tags@master/tags.js";
+    Tags.init("select", {separator: '|,|', addOnBlur:'true', allowNew: 'true', allowClear: 'false'});
+</script>
+
+<div class="row row-cols-1 row-cols-md-2 g-4">
+    <div class="col">
+        <form action="" method="post">
+            {{ form.csrf_token }}
+
+            <!-- Hidden field containing record id -->
+            {{ form.record_id }}
+
+            <div class="row row-cols-1 g-4">
+                <div class="col">
+                    <div class="row row-cols-2 row-cols-sm-3 g-1 g-sm-4 justify-content-between align-items-center">
+                        {% for ff, ph, stf, rtf in [
+                            (form.start_time, 'Started on...', 'setStartTime', 'resetStartTime'),
+                            (form.stop_time, 'Stopped on...', 'setStopTime', 'resetStopTime'),
+                        ] %}
+                        <div class="col-auto col-sm-3">{{ ff['label'](class='form-label') }}</div>
+                        <div class="col-auto col-sm-1">
+                            <div class="dropdown">
+                                <button
+                                    class="btn btn-link text-decoration-none text-primary btn-sm dropdown-toggle"
+                                    type="button"
+                                    id="triggerId"
+                                    data-bs-toggle="dropdown"
+                                    aria-haspopup="true"
+                                    aria-expanded="false"
+                                >
+                                    <span class="text-primary bi-clock"></span>
+                                </button>
+                                <div class="dropdown-menu" aria-labelledby="triggerId">
+                                    <a type="button" class="dropdown-item" onclick="{{ stf }}()">set time now</a>
+                                    <a type="button" class="dropdown-item" onclick="{{ rtf }}()">clear time</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-8">{{ ff(class='form-control', placeholder=ph) }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="row row-cols-1 row-cols-sm-2 g-1 g-sm-4 justify-content-between align-items-center">
+                        {% for ff, ph in [
+                            (form.duration, 'In minutes...'),
+                            (form.interruption, 'Select or create tag(s)'),
+                        ] %}
+                        <div class="col-12 col-sm-3">{{ ff['label'](class='form-label') }}</div>
+                        <div class="col-12 col-sm-9">{{ ff(class='form-control', placeholder=ph) }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col">
+                    {% for ff in [
+                        form.add_interruption,
+                        form.add_note
+                    ] %}
+                    <div class="row g-2">
+                        <div class="col-auto">{{ ff(class='form-check-input') }}</div>
+                        <div class="col-auto">{{ ff['label'](class='form-check-label') }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="col">
+                    <div class="row g-2">
+                        <div class="col-auto">{{ form.submit(class="btn btn-primary") }}</div>
+                        {% if 'create' in request.endpoint %}
+                        {% set n = 'record' %}
+                        {% set a = {'record_id': record.id} %}
+                        {% else %}
+                        {% set n = 'session_interruption' %}
+                        {% set a = {'session_interruption_id': session_interruption.id} %}
+                        {% endif %}
+                        {% set urlstring = 'gamingdb.' + n %}
+                        <div class="col-auto">
+                            <a type="button" class="btn btn-primary" href="{{ url_for(urlstring, **a) }}">Cancel</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="col">
+        <div class="row row-cols-1 g-4">
+            {% set r = record if record is defined else session_interruption.record %}
+            {% for c in [
+                noteSessionCard(r),
+                noteGameCard(r.game)
+            ] %}
+            <div class="col">{{ c }}</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<br>
+
+<script src="{{ url_for('static', filename='datefunctions.js') }}"></script>
+<script>
+    {% if 'create' in request.endpoint %}
+    setDatetime('start_time')
+    {% endif %}
+
+    function setStopTime(){
+        setDatetime('stop_time')
+    }
+
+    function setStartTime(){
+        setDatetime('start_time')
+    }
+
+    function resetStartTime(){
+        resetDatetime('start_time')
+    }
+
+    function resetStopTime(){
+        resetDatetime('stop_time')
+    }
+</script>
+
+{% endblock %}

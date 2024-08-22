@@ -1,0 +1,210 @@
+{% extends 'journaldb/index.html' %}
+{% from 'journaldb/macros.html' import entryCard %}
+
+{% block subtitle %}Entry{% endblock %}
+
+{% macro linksTable() %}
+<table class="table">
+    {% if not (record.parent or record.children) %}
+    <p class="defaulttag m-2 text-center">None</p>
+    {% else %}
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th class="text-end">Type</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if record.parent %}
+        <tr>
+            <td>
+                <a class="defaultlink" href="{{ url_for('journaldb.record', record_id=record.parent.id) }}">
+                    {{ dateGrid(record.parent.record_date, multiline=False) }}
+                </a>
+            </td>
+            <td class="text-end">parent</td>
+        </tr>
+        {% endif %}
+        {% for r in record.children|sort(attribute='record_date') %}
+        <tr>
+            <td>
+                <a class="defaultlink" href="{{ url_for('journaldb.record', record_id=r.id) }}">
+                    {{ dateGrid(r.record_date, multiline=False) }}
+                </a>
+            </td>
+            <td class="text-end">child</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    {% endif %}
+</table>
+{% endmacro %}
+
+{% macro attachmentsTable() %}
+<table class="table">
+    {% if not record.attachments %}
+    <p class="defaulttag m-2 text-center">None</p>
+    {% else %}
+    <thead>
+        <tr>
+            <th>Filename</th>
+            <th class="text-end"></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for a in record.attachments|sort(attribute='filename') %}
+        <tr>
+            <td>{{ a.filename }}</td>
+            <td class="text-end">
+                <div class="btn-group">
+                    <a type="button" class="btn btn-sm btn-primary" href="{{ url_for('journaldb.download_attachment', attachment_id=a.id, browser='yes') }}" target="_blank">view</a>
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-primary dropdown-toggle dropdown-toggle-split"
+                        data-bs-toggle="dropdown"
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                    >
+                        <span class="visually-hidden">Toggle Dropdown</span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end">
+                        <a class="dropdown-item" href="{{ url_for('journaldb.download_attachment', attachment_id=a.id, browser='no') }}">download to device</a>
+                        <a type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#modalId">
+                            delete
+                        </a>
+                    </div>
+                    <div class="modal fade" id="modalId" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="modalTitleId">
+                                        Delete attachment?
+                                    </h5>
+                                </div>
+                                <div class="modal-body">Are you sure you want to delete this attachment?</div>
+                                <div class="modal-footer">
+                                    <button
+                                        type="button"
+                                        class="btn btn-secondary"
+                                        data-bs-dismiss="modal"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <a type="button" class="btn btn-outline-danger" href="{{ url_for('journaldb.delete_attachment', attachment_id=a.id) }}">Delete</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>                
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    {% endif %}
+</table>
+{% endmacro %}
+
+{% block subcontent %}
+
+<div class="row align-items-center">
+    <div class="col"><h1>Entry</h1></div>
+    <div class="col-auto d-grid d-md-none">
+        <div class="dropdown">
+            <button
+                class="btn btn-sm btn-primary dropdown-toggle"
+                type="button"
+                id="triggerId"
+                data-bs-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+            >
+                options
+            </button>
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="triggerId">
+                <a class="dropdown-item" href="{{ url_for('journaldb.update_record', record_id=record.id) }}">edit</a>
+                <a class="dropdown-item" href="{{ url_for('journaldb.create_record', parent_id=record.id) }}">add link</a>
+                <a class="dropdown-item" href="{{ url_for('journaldb.add_attachments', record_id=record.id) }}">add attachment</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-auto d-none d-md-grid">
+        <div class="row g-2">
+            <div class="col-auto">
+                <a class="btn btn-sm btn-primary" href="{{ url_for('journaldb.update_record', record_id=record.id) }}">edit</a>
+            </div>
+            <div class="col-auto">
+                <a class="btn btn-sm btn-primary" href="{{ url_for('journaldb.create_record', parent_id=record.id) }}">add link</a>
+            </div>
+            <div class="col-auto">
+                <a class="btn btn-sm btn-primary" href="{{ url_for('journaldb.add_attachments', record_id=record.id) }}">add attachment</a>
+            </div>
+        </div>
+    </div>
+</div>
+<br>
+
+<div class="row row-cols-1 g-4">
+    <div class="col">
+        <div class="row row-cols-1 row-cols-md-2 g-4">
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-header"><h2>Details</h2></div>
+                    <div class="card-body">
+                        {{ record.record|markdown }}
+                        <table class="table">
+                            <tr>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                            <tr>
+                                <th>Date</th>
+                                <td class="text-end">{{ dateGrid(record.record_date) }}</td>
+                            </tr>
+                            <tr>
+                                <th>Unfinished</th>
+                                <td class="text-end">{{ checkIcon(record.unfinished) }}</td>
+                            </tr>
+                            <tr>
+                                <th>Watched</th>
+                                <td class="text-end">{{ checkIcon(record.watched) }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>                
+            </div>
+            <div class="col">
+                <div class="row row-cols-1 g-4">
+                    {% for i in 'subjects', 'descriptors', 'emotions' %}
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-header"><h2>{{ i|capitalize }}</h2></div>
+                            <div class="card-body">{{ tagsRow('journaldb.tag', i, record[i], align='center', alignempty='center', legacy=False) }}</div>
+                        </div>
+                        
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="row row-cols-1 row-cols-md-2 g-4">
+            {% for i, c in [
+                ('links', linksTable()),
+                ('attachments', attachmentsTable())
+            ] %}
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-header"><h2>{{ i|capitalize }}</h2></div>
+                    <div class="card-body">
+                        {{ c }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+<br>
+
+{% endblock %}

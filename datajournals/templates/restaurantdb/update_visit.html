@@ -1,0 +1,110 @@
+{% extends 'restaurantdb/index.html' %}
+{% from 'restaurantdb/macros.html' import restaurantCard %}
+
+{% block title %}{{'Edit' if request.endpoint == 'restaurantdb.update_visit' else 'Add'}} Visit{% endblock %}
+
+{% block subcontent %}
+<div class="row justify-content-between">
+    <div class="col">
+        <h1>{{'Edit' if request.endpoint == 'restaurantdb.update_visit' else 'Add'}} a restaurant visit</h1>
+    </div>
+    {% if visit %}
+    <div class="col-auto">
+        <form method="POST" action="{{ url_for('restaurantdb.delete_visit', visit_id=visit.id) }}">
+            <input class="btn btn-sm btn-outline-danger" type="submit" value="Delete" onclick="return confirm('Are you sure you want to delete this visit?');">
+        </form>
+    </div>
+    {% endif %}
+</div>
+<br>
+
+{{ bootstrapTagsScript() }}
+
+<form method="POST" action="">
+    {{ form.csrf_token }}
+
+    <div class="row row-cols-1 g-4">
+        <div class="col">
+            <div class="row row-cols-1 row-cols-md-2 g-4">
+                <div class="col">
+                    <div class="row row-cols-1 g-2">
+                        <div class="col">
+                            {{ form.name(class='form-select') }}
+                        </div>
+                        <div class="col">
+                            <div class="row justify-content-between align-items-center">
+                                <div class="col pe-0">
+                                    {{ form.date(class='form-control') }}
+                                </div>
+                                <div class="col-auto">
+                                    <div class="dropdown">
+                                        <button
+                                            class="btn text-primary btn-sm dropdown-toggle border rounded-3 focus-ring focus-ring-1"
+                                            style="--bs-focus-ring-width:.10rem"
+                                            type="button"
+                                            id="triggerId"
+                                            data-bs-toggle="dropdown"
+                                            aria-haspopup="true"
+                                            aria-expanded="false"
+                                        >
+                                            <span class="text-primary bi-clock"></span>
+                                        </button>
+                                        <div class="dropdown-menu dropdown-menu-end" aria-labelledby="triggerId">
+                                            <a type="button" class="dropdown-item" onclick="setDate()">set time now</a>
+                                            <a type="button" class="dropdown-item" onclick="resetDate()">clear</a>
+                                        </div>
+                                    </div> 
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            {{ form.meal(class='form-select', placeholder='Choose a meal') }}
+                        </div>
+                        <div class="col">
+                            {{ form.price_rating(class='form-select', placeholder='Rate the price') }}
+                        </div>
+                        <div class="col">
+                            {{ form.visit_rating(class='form-select', placeholder='Rate the visit, overall') }}
+                        </div>
+                        <div class="col">
+                            {{ form.comments(class='form-control', rows=10, placeholder='Add a comment...') }}
+                        </div>
+                    </div>
+                </div>
+                {% if visit %}
+                <div class="col">
+                    {{ restaurantCard(visit.record) }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col">
+            <div class="row g-2">
+                <div class="col-auto">{{ form.submit(class="btn btn-primary") }}</div>
+                <div class="col-auto">
+                    {% set urlstring = url_for('restaurantdb.visit', visit_id=visit.id) if visit else request.referrer %}
+                    <a type="button" class="btn btn-primary" href="{{ urlstring }}">Cancel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <br>
+
+    
+
+</form>
+
+<script src="{{ url_for('static', filename='datefunctions.js') }}"></script>
+
+<script>
+function setDate(){
+    setDatetime('date')
+}
+
+function resetDate(){
+    resetDatetime('date')
+}
+
+</script>
+{% endblock %}

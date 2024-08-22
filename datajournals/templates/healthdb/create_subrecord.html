@@ -1,0 +1,128 @@
+{% extends 'healthdb/index.html' %}
+
+{% block subtitle %}Add Subrecord{% endblock %}
+
+{% block subcontent %}
+<div class="row">
+    <div class="col">
+        <h1>Add {{ recordtype|capitalize }} Record</h1>
+    </div>
+</div>
+<br>
+
+<script type="module">
+    import Tags from "https://cdn.jsdelivr.net/gh/lekoala/bootstrap5-tags@master/tags.js";
+    Tags.init("select", {separator:'|,|', addOnBlur:'true', allowNew:'true'});
+</script>
+
+<form method='POST' action="" enctype="multipart/form-data">
+    {{ form.csrf_token }}
+
+    <!-- Date -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.record_date.label(class='form-label') }}
+            {{ form.record_date(class='form-control') }}
+        </div>
+    </div>
+
+    {% if recordtype == 'glucose' %}
+    <div class="row pb-2">
+        <div class="col">
+            {{ form.glucose_measure.label(class='form-label')}}
+            {{ form.glucose_measure(class='form-control') }}
+        </div>
+        <div class="col">
+            {{ form.glucose_units.label(class='form-label')}}
+            {{ form.glucose_units(class='form-control', value='mg/dL') }}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if recordtype == 'cardio' %}
+    <div class="row pb-2">
+        <div class="col">
+            {{ form.systolic.label(class='form-label')}}
+            {{ form.systolic(class='form-control') }}
+        </div>
+        <div class="col">
+            {{ form.diastolic.label(class='form-label')}}
+            {{ form.diastolic(class='form-control') }}
+        </div>
+        <div class="col">
+            {{ form.heart_rate.label(class='form-label')}}
+            {{ form.heart_rate(class='form-control') }}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if recordtype == 'pain' %}
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.pain_level.label(class='form-label')}}
+            {{ form.pain_level(class='form-control', placeholder='On a a scale of 0 to 10...') }}
+        </div>
+    </div>
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.pain_description.label(class='form-label')}}
+            {{ form.pain_description(class='form-control', rows=7, placeholder='Describe the location and sensation of pain...') }}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if recordtype == 'weight' %}
+    <div class="row">
+        <div class="col pb-2">
+            {{ form.weight_measure.label(class='form-label')}}
+            {{ form.weight_measure(class='form-control') }}
+        </div>
+        <div class="col">
+            {{ form.weight_units.label(class='form-label')}}
+            {{ form.weight_units(class='form-control', value='lbs') }}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Descriptors -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.descriptors.label(class='form-label') }}
+            {{ form.descriptors(class='form-select') }}
+        </div>
+    </div>
+
+    <!-- Emotions -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.emotions.label(class='form-label') }}
+            {{ form.emotions(class='form-select') }}
+        </div>
+    </div>
+
+    <!-- Add note check -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            <div class="form-check">
+                {{ form.add_note(class='form-check-input') }}
+                {{ form.add_note.label(class='form-check-label') }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="row pt-3">
+        <div class="col-auto pe-1">{{ form.submit(class="btn btn-primary") }}</div>
+        <div class="col-auto px-0">
+            <a type="button" class="btn btn-primary" href="javascript:history.back()">Cancel</a>
+        </div>
+    </div>
+
+</form>
+<br>
+
+<script src="{{ url_for('static', filename='datefunctions.js') }}"></script>
+<script>
+    setDatetime('record_date');
+</script>
+{% endblock %}

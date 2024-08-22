@@ -1,0 +1,11 @@
+{% extends 'healthdb/index.html' %}
+
+{% block subtitle %}Emotions{% endblock %}
+
+{% block subcontent %}
+{{ tagslayout(
+    databasename='health',
+    tagtype='emotion',
+    paginator=paginator
+) }}
+{% endblock %}

@@ -1,0 +1,8 @@
+graft datajournals/static/
+graft datajournals/templates/
+graft migrations/
+graft logs/
+exclude logs/datajournals.*
+graft instance
+exclude instance/config.*
+global-exclude *.py[cod]

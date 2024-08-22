@@ -1,0 +1,21 @@
+{% extends 'sleepdb/index.html' %}
+{% from 'sleepdb/macros.html' import recordsTable %}
+
+{% block subtitle %}Sleep Records{% endblock %}
+
+{% block subcontent %}
+
+<div class="row">
+    <div class="col">
+        <h1>Sessions</h1>
+    </div>
+</div>
+{% if paginator.items %}
+{{ recordsTable(paginator, displaytags=True, displayinterruptions=True, displayratings=True) }}
+{{ basicpaginator('sleep', 'records', paginator, urlfragment='recordstable') }}
+{% else %}
+<br>
+<p class="text-center">No sessions</p>
+{% endif %}
+
+{% endblock %}

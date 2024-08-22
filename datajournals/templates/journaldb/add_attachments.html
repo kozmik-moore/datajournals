@@ -1,0 +1,62 @@
+{% extends 'journaldb/index.html' %}
+{% from 'journaldb/macros.html' import entryCard %}
+
+{% block subtitle %}Add attachments{% endblock %}
+
+{% block subcontent %}
+<div class="row">
+    <div class="col">
+        <h1>Add attachments</h1>
+    </div>
+</div>
+<br>
+
+<form action="" method="post" enctype="multipart/form-data">
+    {{ form.csrf_token }}
+    {{ form.record_id() }}
+
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+        <div class="col">
+            <div class="row row-cols-1 g-4">
+                <div class="col">
+                    {{ form.attachments(class='form-control', placeholder='Add attachment(s)') }}
+                </div>
+                <div class="col">
+                    <div class="row g-2">
+                        <div class="col-auto">{{ form.submit(class='btn btn-primary') }}</div>
+                        <div class="col-auto">
+                            <a class="btn btn-primary" href="{{ request.referrer }}">Cancel</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="row row-cols-1 g-4">
+                <div class="col">
+                    {{ entryCard(record) }}
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Attachments</h2>
+                        </div>
+                        <div class="card-body">
+                            <table class="table">
+                                {% for a in record.attachments|sort(attribute='filename') %}
+                                <tr>
+                                    <th>{{ loop.index }}</th>
+                                    <td class="text-end">{{ a.filename }}</td>
+                                </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+<br>
+{% endblock %}

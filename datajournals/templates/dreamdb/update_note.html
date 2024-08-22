@@ -1,0 +1,94 @@
+{% extends 'dreamdb/index.html' %}
+
+{% block subtitle %}{{ 'Edit' if request.endpoint == 'dreamdb.update_note' else 'Add'}} note{% endblock %}
+
+{% block subcontent %}
+
+<div class="row align-items-center justify-content-between">
+    <div class="col">
+        <h1>{{ 'Edit' if request.endpoint == 'dreamdb.update_note' else 'Add'}} note</h1>
+    </div>
+    {% if request.endpoint == 'dreamdb.update_note' %}
+    <div class="col-auto">
+        <button
+            type="button"
+            class="btn btn-outline-danger btn-sm"
+            data-bs-toggle="modal"
+            data-bs-target="#modalId"
+        >
+            delete
+        </button>
+        
+        <div
+            class="modal fade"
+            id="modalId"
+            tabindex="-1"
+            data-bs-backdrop="static"
+            data-bs-keyboard="false"
+            
+            role="dialog"
+            aria-labelledby="modalTitleId"
+            aria-hidden="true"
+        >
+            <div
+                class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm"
+                role="document"
+            >
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTitleId">
+                            Delete note?
+                        </h5>
+                    </div>
+                    <div class="modal-body"><p class="text-center">Are you sure you want to delete this note?</p></div>
+                    <div class="modal-footer">
+                        <a type="button" class="btn btn-danger btn-sm" href="{{ url_for('dreamdb.delete_note', note_id=note.id) }}">Delete</a>
+                        <button
+                            type="button"
+                            class="btn btn-secondary btn-sm"
+                            data-bs-dismiss="modal"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+<br>
+
+<form action="" method="POST">
+    {{ form.csrf_token }}
+    <div class="row row-cols-1 row-cols-md-2 g-3 g-md-4">
+        <div class="col">
+            <div class="row h-100">
+                <div class="col">{{ form.note(class='form-control', rows=10, style='height:100%;') }}</div>
+            </div>
+        </div>
+        <div class="col d-none d-md-block">{{ dreamCard(record) }}</div>
+        <div class="col">
+            <div class="row row-cols-2 justify-content-between align-items-center g-2">
+                <div class="col-auto">
+                    <div class="row g-2">
+                        <div class="col-auto">{{ form.submit(class='btn btn-primary') }}</div>
+                        <div class="col-auto">
+                            <a class="btn btn-primary" href="{{ request.referrer }}">Cancel</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <div class="row g-2">
+                        <div class="col-auto">{{ form.important(class='form-check-input') }}</div>
+                        <div class="col-auto">{{ form.important.label(class='form-label') }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col d-block d-md-none">{{ dreamCard(record) }}</div>
+    </div>
+</form>
+<br>
+
+{% endblock %}

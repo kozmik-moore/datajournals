@@ -1,0 +1,243 @@
+{% extends 'journaldb/index.html' %}
+{% from 'journaldb/macros.html' import createRecordsTable %}
+
+{% block subtitle %}Entries{% endblock %}
+
+{% block subcontent %}
+
+{{ bootstrapTagsScript('false') }}
+
+<div class="row align-items-center">
+    <div class="col">
+        <h1>Entries</h1>
+    </div>
+    <div class="col-auto">
+        <form action="" method="post">
+            {{ form.csrf_token }}
+            {% if (content, linktype, subjects, descriptors, emotions, unfinished, watched)|select|first %}
+            <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-primary" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalId">
+                    Filter
+                </button>
+                <button
+                    type="button"
+                    class="btn btn-sm btn-primary dropdown-toggle dropdown-toggle-split"
+                    data-bs-toggle="dropdown"
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                >
+                    <span class="visually-hidden">Toggle Dropdown</span>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end">
+                    <a class="dropdown-item" href="{{ url_for('journaldb.records', remove='all') }}">Clear all filters</a>
+                </div>
+            </div>
+            {% else %}
+            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalId">
+                Filter
+            </button>
+            {% endif %}
+            <div
+                class="modal fade"
+                id="modalId"
+                data-bs-backdrop="static"
+                data-bs-keyboard="false"
+                
+                role="dialog"
+                aria-labelledby="modalTitleId"
+                aria-hidden="true"
+            >
+                <div
+                    class="modal-dialog modal-dialog-centered modal-md"
+                    role="document"
+                >
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalTitleId">
+                                Filter entries
+                            </h5>
+                            <button
+                                type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Close"
+                            ></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row row-cols-1 g-2">
+                                <div class="col">{{ form.content(class='form-control', placeholder='Entry content...', autocomplete='off') }}</div>
+                                <div class="col">{{ form.linktype(class='form-select', placeholder='Link type...') }}</div>
+                                <div class="col">{{ form.subjects(class='form-select', placeholder='Subject tags...') }}</div>
+                                <div class="col">{{ form.descriptors(class='form-select', placeholder='Descriptor tags...') }}</div>
+                                <div class="col">{{ form.emotions(class='form-select', placeholder='Emotion tags...') }}</div>
+                                <div class="col">{{ form.unfinished(class='form-select', placeholder='Unfinished') }}</div>
+                                <div class="col">{{ form.watched(class='form-select', placeholder='Watched') }}</div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            {% if (content, linktype, subjects, descriptors, emotions, unfinished, watched)|select|first %}
+                            <a class="btn btn-secondary" href="{{ url_for('journaldb.records', remove='all') }}">Clear all filters</a>
+                            {% endif %}
+                            {{ form.submit(class='btn btn-primary') }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>      
+    </div>
+</div>
+
+{% if (content, linktype, subjects, descriptors, emotions, unfinished, watched)|select|first %}
+<div class="row align-items-center g-2">
+    <div class="col-auto">Filtered by:</div>
+
+
+    {# Tag filters #}
+    {% for i, l in [('subject', subjects), ('descriptor', descriptors), ('emotion', emotions)] %}
+    {% for t in l %}
+    {% set a = {'remove' + i: t} %}
+    <div class="col-auto">
+        <a href="{{ url_for('journaldb.records', **a) }}"><span class="badge pill text-bg-primary">{{ i }}: {{ t }} <span class="bi-x"></span></span></a>
+    </div>
+    {% endfor %}
+    {% endfor %}
+    
+    {# Content filter #}
+    {% if content %}
+    <div class="col-auto">
+        <a href="{{ url_for('journaldb.records', remove='content') }}"><span class="badge pill text-bg-primary">content: "{{ content }}" <span class="bi-x"></span></span></a>
+    </div>
+    {% endif %}
+    
+    {# Link type filter #}
+    {% if linktype %}
+    <div class="col-auto">
+        <a href="{{ url_for('journaldb.records', remove='linktype') }}"><span class="badge pill text-bg-primary">link: {{ linktype }} <span class="bi-x"></span></span></a>
+    </div>
+    {% endif %}
+    
+    {# Unfinished filter #}
+    {% if unfinished %}
+    <div class="col-auto">
+        <a href="{{ url_for('journaldb.records', remove='unfinished') }}"><span class="badge pill text-bg-primary">unfinished: {{ unfinished }} <span class="bi-x"></span></span></a>
+    </div>
+    {% endif %}
+    
+    {# Watched filter #}
+    {% if watched %}
+    <div class="col-auto">
+        <a href="{{ url_for('journaldb.records', remove='watched') }}"><span class="badge pill text-bg-primary">watched: {{ watched }} <span class="bi-x"></span></span></a>
+    </div>
+    {% endif %}
+
+</div>
+{% endif %}
+<br>
+
+<table class="table align-top">
+    <thead>
+        <tr>
+            <th class="col-3 d-none d-md-table-cell"></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in paginator %}
+        <tr>
+            <td class="d-none d-md-table-cell">
+                <div class="row row-cols-1 g-3">
+                    <div class="col">
+                        <a class="fw-bold defaultlink" href="{{ url_for('journaldb.record', record_id=r.id) }}">
+                            {{ dateGrid(r.record_date, monthfmt='%B', dowfmt='%A') }}
+                        </a>
+                    </div>
+                    <div class="col">
+                        <div class="row justify-content-between g-2">
+                            <div class="col">
+                                <p class="fw-bold mb-0">
+                                    {% set lc = (r.parent or r.children) %}
+                                    {% set t = ' Has a link' if (r.parent and not r.children) or (not r.parent and r.children|length == 1) else ' Has links' if lc else 'No links' %}
+                                    {{ checkIcon(lc, icontrue='link', colortrue='body', text=t, iconfalse='') }}
+                                </p>
+                            </div>
+                            <div class="col">
+                                <p class="fw-bold mb-0">
+                                    {% set t = '%s attachment%s' % ('Has' if r.attachments else 'No', '' if r.attachments|length == 1 else 's') %}
+                                    {{ checkIcon(r.attachments, icontrue='paperclip', colortrue='body', text=t, iconfalse='') }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <p class="fw-bold mb-0">Tags</p>
+                        <div class="row row-cols-1 g-0">
+                            {% for i, fl in [('subjects', subjects), ('descriptors', descriptors), ('emotions', emotions)] %}
+                            <div class="col">
+                                <div class="row row-cols-2 g-0">
+                                    {% for t in r[i]|sort(attribute='tag') %}
+                                    <div class="col">
+                                        <p class="{{ 'defaulttag' if t.tag not in fl else 'text-warning-emphasis' }} m-0">{{ t.tag }}</p>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div class="row row-cols-1 g-3">
+                    <div class="col d-block d-md-none">
+                        <div class="row justify-content-between align-items-top">
+                            <div class="col">
+                                <a class="fw-bold defaultlink" href="{{ url_for('journaldb.record', record_id=r.id) }}">
+                                    {{ dateGrid(r.record_date, monthfmt='%B', dowfmt='%A') }}
+                                </a>
+                            </div>
+                            <div class="col-auto">
+                                <div class="row g-1">
+                                    <div class="col-auto">
+                                        {{ checkIcon(lc, icontrue='link', colortrue='body', iconfalse='') }}
+                                    </div>
+                                    <div class="col-auto">
+                                        {{ checkIcon(r.attachments, icontrue='paperclip', colortrue='body', iconfalse='') }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        {% set c = r.record %}
+                        {% if content %}
+                        {% set fns = namespace(c=c) %}
+                        {% for i in content|upper, content|lower, content|capitalize %}
+                        {% set fns.c = fns.c|replace(i, '<span class="text-warning-emphasis">%s</span>' % i) %}
+                        {% endfor %}
+                        {% set c = fns.c %}
+                        {% endif %}
+                        {{ c|markdown }}
+                    </div>
+                    <div class="col d-block d-md-none">
+                        <div class="row">
+                            <div class="col-auto">
+                                <p class="fw-bold mb-0">Tags:</p>
+                            </div>
+                            {% for i, fl in [('subjects', subjects), ('descriptors', descriptors), ('emotions', emotions)] %}
+                            {% for t in r[i]|sort(attribute='tag') %}
+                            <div class="col-auto">
+                                <p class="{{ 'defaulttag' if t.tag not in fl else 'text-warning-emphasis' }} m-0">{{ t.tag }}</p>
+                            </div>
+                            {% endfor %}
+                            {% endfor %}
+                        </div></div>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{{ basicPaginator('journaldb.records', paginator) }}
+<br>
+
+{% endblock %}

@@ -1,0 +1,576 @@
+<!-- MACRO -->
+<!-- Template for a basic Paginator Navbar -->
+{% macro createBasicPaginatorNavbar(databasename, view, paginator, pagenumber=True) %}
+
+<!-- Initialize kwargs -->
+{% if False %}{{ kwargs }}{% endif %}
+
+{% if kwargs.get('urlstring') %}
+{% set urlstring = kwargs['urlstring'] %}
+{% else %}
+{% set urlstring = '%sdb.%s' % (databasename, view) %}
+{% endif %}
+{% if kwargs.get('page_args') %}
+{% set param = kwargs['page_args'][0] %}
+{% set arg = kwargs['page_args'][1] %}
+{% else %}
+{% set param = '' %}
+{% set arg = '' %}
+{% endif %}
+{% set args = {param: arg, 'page': 1} %}
+<div class="row">
+    <div class="col">
+        <nav aria-label="...">
+            <ul class="pagination">
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for(urlstring, **args)}}">First</a>
+                </li>
+                {% if paginator.has_prev %}
+                {% set args = {param: arg, 'page': paginator.prev_num} %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for(urlstring, **args) }}">Prev</a>
+                    </li>
+                {% else %}
+                    <li class="page-item">
+                        <a class="page-link disabled" href="#">Prev</a>
+                    </li>
+                {% endif %}
+                {% if paginator.has_next %}
+                {% set args = {param: arg, 'page': paginator.next_num} %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for(urlstring, **args) }}">Next</a>
+                    </li>
+                {% else %}
+                    <li class="page-item">
+                        <a class="page-link disabled" href="#">Next</a>
+                    </li>
+                {% endif %}
+                {% set args = {param: arg, 'page': paginator.pages} %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for(urlstring, **args) }}">Last</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    {% if pagenumber %}
+    <div class="col-auto">
+        Page {{ paginator.page }} of {{ paginator.pages }}
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+
+<!-- MACRO -->
+<!-- Creates a records page, given a database name, a records table, and a records paginator. -->
+{% macro createRecordsPage(databasename, recordstable, records_paginator) %}
+
+<!-- Initialize kwargs -->
+{% if False %}{{ kwargs }}{% endif %}
+
+<!-- Header and Stats -->
+<div class="row justify-content-between">
+    <div class="col-auto">
+        {% if kwargs.get('header') %}
+        <h1>{{ kwargs.get('header') }}</h1>
+        {% else %}
+        <h1>{{ databasename|capitalize }} Records</h1>
+        {% endif %}
+    </div>
+    <div class="col-auto">
+        {% if kwargs.get('endpoint') %}
+        {% set urlstring = databasename + 'db.' + kwargs.get('endpoint') %}
+        {% else %}
+        {% set urlstring = databasename + 'db.create_record' %}
+        {% endif %}
+        <h1><a type="button" class="btn btn-primary" href="{{ url_for(urlstring) }}">Add</a></h1>
+    </div>
+</div>
+{% if kwargs.get('count')  %}
+<div class="row">
+    <div class="col-auto">
+        <h3>Count: {{ kwargs.get('count') }}</h3>
+    </div>
+</div>
+{% endif %}
+<br>
+
+<!-- use d-*-block to hide elements on mobile platforms -->
+
+<!-- Record section-->
+{{ recordstable }}
+
+<!-- Records Pagination Navbar -->
+{% if kwargs.get('pagination_endpoint') %}
+{% set urlstring = kwargs.get('pagination_endpoint') %}
+{% else %}
+{% set urlstring = 'records'%}
+{% endif %}
+{{ createBasicPaginatorNavbar(databasename, urlstring, records_paginator) }}
+
+{% endmacro %}
+
+
+<!-- MACRO -->
+<!-- Creates a page of tags, given a database name, a tag type, and a pagination of tags -->
+{% macro createTagsPage(databasename, tagtype, tags_paginator) %}
+
+<!-- Initialize kwargs -->
+{% if False %}{{ kwargs }}{% endif %}
+
+<!-- Header and Stats -->
+<div class="row">
+    <div class="col">
+        <h1>{{ tagtype|capitalize }}s</h1>
+    </div>
+</div>
+<br>
+
+<!-- Tags -->
+<div class="row">
+    <div class="col">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">Tag</th>
+                    <th scope="col"><div class="d-flex justify-content-center">Records with tag</div></th>
+                    <th>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+            {% set urlstring = '%sdb.%s' % (databasename, tagtype) %}
+            {% set param = '%s_id' % tagtype %}
+            {% for tag in tags_paginator %}
+            {% set key = {param: tag.id} %}
+            {% set url = url_for(urlstring, **key) %}
+                <tr>
+                    <td>
+                        <div class="row">
+                            <div class="col">{{ tag.tag }}</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="row">
+                            <div class="col">
+                                <div class="d-flex justify-content-center">
+                                    {{ tag.records|length }}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="row">
+                            <div class="col">
+                                <div class="d-flex justify-content-end">
+                                    <a class="text-decoration-none" href="{{ url }}">view</a>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<br>
+
+<!-- Tags Pagination Navbar -->
+{% set urlstring = '%sdb.%ss' % (databasename, tagtype) %}
+{{ createBasicPaginatorNavbar(urlstring=urlstring, paginator=tags_paginator) }}
+
+{% endmacro %}
+
+
+<!-- MACRO -->
+<!-- Creates a page of records, given a database name, a tag type, a records table, a tag object, and a pagination of tagged records -->
+{% macro createTagPage(databasename, tagtype, recordstable, tagobject, paginator) %}
+
+<!-- Initialize kwargs -->
+{% if False %}{{ kwargs }}{% endif %}
+
+<!-- Header -->
+<div class="row">
+    <div class="col">
+        <h1>{{ tagtype|capitalize }}: {{ tagobject.tag }}</h1>
+    </div>
+</div>
+
+<!-- Records count -->
+{% if not kwargs.get('disablecount') %}
+<div class="row">
+    <div class="col">
+        <h3>{{ tagobject.records|length }} records</h3>
+    </div>
+</div>
+{% endif %}
+<br>
+
+<!-- Data section -->
+{% if kwargs.get('datasection') %}
+{{ kwargs.get('datasection') }}
+{% endif %}
+
+<!-- Records -->
+{% if recordstable %}
+{{ recordstable }}
+{% endif %}
+
+<!-- Records Pagination Navbar -->
+{% if paginator %}
+{% set param = '%s_id' % tagtype %}
+{% set arg = tagobject.id %}
+{{ createBasicPaginatorNavbar(databasename, tagtype, paginator, page_args=(param, arg)) }}
+{% endif %}
+
+{% endmacro %}
+
+
+<!-- MACRO -->
+<!-- Creates a note page, given a database name, a note, and a table of records -->
+{% macro createNotePage(databasename, note, recordsection) %}
+
+<!-- Header and Stats -->
+{% set urlstring = '%sdb.update_note' % databasename %}
+<div class="row justify-content-between">
+    <div class="col-auto">
+        <div class="row">
+            <div class="col-auto">
+                <h1>Note</h1>
+            </div>
+            {% if note.important %}
+            <div class="col d-flex align-items-stretch ps-0">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <span class="badge rounded-pill bg-danger align-middle">Important</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        <div class="row">
+            <div class="col">
+                <h3>{{ note.date_added.strftime('%A, %B %d, %Y') }}</h3>
+                <h4>{{ note.date_added.strftime('%H:%M') }} (UTC)</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-auto">
+        <h1><a type="button" class="btn btn-secondary" href="{{ url_for(urlstring, note_id=note.id) }}">edit</a></h1>
+    </div>
+</div>
+<br>
+
+<!-- Note -->
+<p>{{ note.note|markdown }}</p>
+<br>
+
+<!-- Record -->
+{% set urlstring = '%sdb.record' % databasename %}
+<div class="row justify-content-between">
+    <div class="col-auto">
+        <h2>Record</h2>
+    </div>
+{% if note.record %}
+    <div class="col-auto">
+        <h2><a type="button" class="btn btn-primary" href="{{ url_for(urlstring, record_id=note.record.id)}}">Go to record</a></h2>
+    </div>
+</div>
+
+{{ recordsection }}
+
+{% else %}
+
+    <div class="col-auto">
+        <h2><a type="button" class="btn btn-primary disabled" href="#">Go to record</a></h2>
+    </div>
+</div>
+
+<br>
+<hr>
+<div class="row justify-content-center">
+    <div class="col-auto">
+        No Record
+    </div>
+</div>
+{% endif %}
+<hr>
+
+{% endmacro %}
+
+
+<!-- MACRO -->
+<!-- Template for a Notes page, given a database name, a record template, a note template, and a paginator of notes -->
+{% macro createNotesPage(databasename, recordtemplate, notetemplate, notes_paginator, date=True) %}
+
+<!-- Initialize kwargs -->
+{% if False %}{{ kwargs }}{% endif %}
+
+<!-- Header and Stats -->
+{% set urlstring = '%sdb.create_note' % databasename %}
+<div class="row justify-content-between">
+    <div class="col">
+        <h1>Notes</h1>
+    </div>
+    <div class="col-auto">
+        <h1><a type="button" class="btn btn-primary" href="{{ url_for(urlstring) }}">Add</a></h1>
+    </div>
+</div>
+
+<!-- Notes and Records table -->
+<table class="table">
+    <thead>
+        <th scope="row">{{ kwargs.get('notetype', 'Note')|capitalize }}</th>
+        <th scope="row">{{ kwargs.get('recordtype', 'Record')|capitalize }}</th>
+        {% if date %}
+        <th scope="row">Date Added</th>
+        {% endif %}
+    </thead>
+    <tbody>
+    {% set urlstring = '%sdb.note' % databasename %}
+    {% for note in notes_paginator %}
+        <tr>
+            <td>
+                <div class="row">
+                    <div class="col">
+                        {{ notetemplate(note) }}
+                    </div>
+                    <div class="col-auto">
+                        <a class="text-decoration-none" href="{{ url_for(urlstring, note_id=note.id) }}">view {{ kwargs.get('notetype', 'note') }}</a>
+                    </div>
+                </div>
+                <div class="row">
+                    {% if note.important %}
+                    <div class="col-auto">
+                        <span class="badge rounded-pill bg-danger">Important</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </td>
+            <td>
+                {% if note.record %}
+                <div class="row">
+                    <div class="col">
+                        {{ recordtemplate(note.record) }}
+                    </div>
+                    <div class="col-auto">
+                        <a class="text-decoration-none" href="{{ url_for('sleepdb.record', record_id=note.record.id) }}">view {{ kwargs.get('recordtype', 'record') }}</a>
+                    </div>
+                </div>
+                {% else %}
+                <p>No {{ kwargs.get('recordtype', 'record') }}</p>
+                {% endif %}
+            </td>
+            {% if date %}
+            <td>
+                {{ note.date_added.strftime('%A, %B, %d, %Y') }}
+                {{ note.date_added.strftime('%H:%M') }}
+            </td>
+            {% endif %}
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<br>
+
+<!-- Notes Paginator Navbar -->
+{{ createBasicPaginatorNavbar(databasename, 'notes', notes_paginator) }}
+
+{% endmacro %}
+
+
+<!-- MACRO -->
+<!-- Template for showing a note in the Notes page -->
+{% macro createNotesPageNote(note) %}
+
+<div class="row">
+    <div class="col">
+    {% if note.note|length > 200 %}
+        {{ note.note[:200]|markdown }}
+    {% else %}
+        {{ note.note|markdown }}
+    {% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+
+<!-- MACRO -->
+<!-- Template for a Record page -->
+{% macro createRecordPage(databasename, record, mainheader, paginator=None) %}
+
+<!-- Initialize kwargs -->
+{% if False %}{{ kwargs }}{% endif %}
+
+<div class="row justify-content-between">
+    <div class="col-auto">
+        <div class="row">
+            <div class="col">
+                <h1>{{ mainheader }}</h1>
+            </div>
+        </div>
+        {% if kwargs.get('subheader') %}
+        <div class="row">
+            <div class="col">
+                <h3>{{ kwargs['subheader'] }}</h3>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    <div class="col-auto">
+        <div class="row">
+            {% if kwargs.get('buttonheader') %}
+            {{ kwargs.get('buttonheader') }}
+            {% else %}
+            {% set urlstring = '%sdb.update_record' % databasename %}
+            <div class="col-auto">
+                <h1><a type="button" class="btn btn-secondary" href="{{ url_for(urlstring, record_id=record.id) }}">edit</a></h1>
+            </div>
+            {% set urlstring = '%sdb.create_note' % databasename %}
+            <div class="col-auto ps-0">
+                <h1><a type="button" class="btn btn-secondary" href="{{ url_for(urlstring, record_id=record.id) }}">add note</a></h1>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<br>
+
+<div class="row">
+    <div class="col">
+        {% if kwargs.get('recordsection') %}
+        <div class="row">
+            <div class="col">
+                {{ kwargs['recordsection'] }}
+            </div>
+        </div>
+        <br>
+        {% endif %}
+    </div> 
+
+    <div class="col-auto">
+        {% if kwargs.get('tagssection') %}
+        <div class="row">
+            <div class="col">
+                {{ kwargs['tagssection'] }}
+            </div>
+        </div>
+        <br>
+        {% endif %}
+    </div> 
+</div>
+
+{% if kwargs.get('datasection') %}
+<div class="row">
+    <div class="col">
+        {{ kwargs['datasection'] }}
+    </div>
+</div>
+<br>
+{% endif %}
+
+<!-- Notes -->
+{% if not kwargs.get('notesdisabled') %}
+<div class="row">
+    <div class="col">
+        <h1>{{ (kwargs.get('paginatortype', 'Note') + 's')|capitalize }}</h1>
+    </div>
+</div>
+<br>
+
+{% if paginator%}
+<table class="table">
+    <thead>
+        <tr>
+            <th>{{ kwargs.get('paginatortype', 'Note')|capitalize }}</th>
+            <th>Date Added</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    {% set urlstring = '%sdb.note' % databasename %}
+    {% for note in paginator %}
+        <tr>
+            <td>
+                <div class="row">
+                    <div class="col-auto">
+                        {{ note.note|markdown }}
+                    </div>
+                {% if note.important %}
+                    <div class="col-auto">
+                        <span class="badge rounded-pill bg-danger">Important</span>
+                    </div>
+                {% endif %}
+                </div>
+            </td>
+            <td>{{ note.date_added.strftime('%a, %b %d, %Y') }}</td>
+            <td>
+                <div class="row">
+                    <div class="col-auto">
+                        <a class="text-decoration-none" href="{{ url_for(urlstring, note_id=note.id) }}">view</a>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<br>
+
+{{ createBasicPaginatorNavbar(databasename, 'record', paginator, page_args=('record_id', record.id)) }}
+
+{% else %}
+
+<!-- No Notes -->
+<hr>
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-auto">
+            No Notes
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endif %}
+
+{% endmacro %}
+
+
+<!-- MACRO -->
+<!-- Template for a section that lists tags -->
+{% macro createTagListSection(databasename, tagtype, record) %}
+
+<!-- Initialize kwargs -->
+{% if False %}{{ kwargs }}{% endif %}
+
+{% set tags = '%ss' % tagtype %}
+{% set urlstring = '%sdb.%s' % (databasename, tagtype) %}
+{% set param = '%s_id' % tagtype %}
+<div class="row d-flex justify-content-end">
+    <div class="col-auto">
+        <h5>{{ tagtype|capitalize }}s {{ kwargs.get('subsection', '') }}</h5>
+    </div>
+</div>
+<div class="row row-cols-2 row-cols-sm-auto d-flex justify-content-end">
+{% for tag in record[tags]|sort(attribute='tag') %}
+{% set args = {param: tag.id} %}
+    <div class="col-auto ps-0 pb-1">
+        <a type="button" class="text-primary text-decoration-none" href="{{ url_for(urlstring, **args) }}">{{ tag.tag }}</a>
+    </div>
+{% endfor %}
+</div>
+{% endmacro %}
+
+
+<!-- MACRO -->
+<!-- Template to create a badge -->
+{% macro createBadge(text='Important', bgcolor='danger', txtcolor='light', style='rounded-pill', opacity='100') %}
+
+<!-- Initialize kwargs -->
+{% if False %}{{ kwargs }}{% endif %}
+
+<span class="badge {{ style }} bg-{{ bgcolor }} text-{{ txtcolor }} opacity-{{ opacity }}">{{ text }}</span>
+
+{% endmacro %}

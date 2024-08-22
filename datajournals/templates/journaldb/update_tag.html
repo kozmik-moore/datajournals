@@ -1,0 +1,88 @@
+{% extends 'journaldb/index.html' %}
+
+{% set tl = tagtype[:-1] %}
+{% block subtitle %}Edit {{ tl }}{% endblock %}
+
+{% block subcontent %}
+<div class="row align-items-center justify-content-between">
+    <div class="col">
+        <h1>Edit {{ tl }}</h1>
+    </div>
+    <div class="col-auto">
+        <button
+            type="button"
+            class="btn btn-outline-danger btn-sm"
+            data-bs-toggle="modal"
+            data-bs-target="#modalId"
+        >
+            delete
+        </button>
+
+        <div
+            class="modal fade"
+            id="modalId"
+            tabindex="-1"
+            data-bs-backdrop="static"
+            data-bs-keyboard="false"
+            
+            role="dialog"
+            aria-labelledby="modalTitleId"
+            aria-hidden="true"
+        >
+            <div
+                class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm"
+                role="document"
+            >
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTitleId">
+                            Delete {{ tl }}{{ '?' if not tag.records else '' }}
+                        </h5>
+                    </div>
+                    {% set md = 'There are records using this %s. Remove it from all journal records and try again.' % tl %}
+                    {% set mc = 'Are you sure you want to delete this %s?' % tl %}
+                    <div class="modal-body">
+                        <p class="text-center">{{ md if tag.records else mc }}</p>
+                    </div>
+                    <div class="modal-footer">
+                        {% if not tag.records %}
+                        <a type="button" class="btn btn-danger btn-sm" href="{{ url_for('journaldb.delete_tag', tagtype=tagtype, tagid=tag.id) }}">Delete</a>
+                        {% endif %}
+                        <button
+                            type="button"
+                            class="btn btn-secondary btn-sm"
+                            data-bs-dismiss="modal"
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<br>
+
+<form action="" method="post">
+    {{ form.csrf_token }}
+
+    {{ messageFlasher() }}
+
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+        <div class="col">
+            {{ form.tag(class='form-control', placeholder='Rename this %s...' % tl, autocomplete="off") }}
+        </div>
+        <div class="col">
+            <div class="row g-2">
+                <div class="col-auto">
+                    {{ form.submit(class='btn btn-primary') }}
+                </div>
+                <div class="col-auto">
+                    <a class="btn btn-primary" type="button" href="{{ request.referrer }}">Cancel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</form>
+{% endblock %}

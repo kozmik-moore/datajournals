@@ -1,0 +1,249 @@
+{% extends 'sleepdb/index.html' %}
+{% from 'sleepdb/macros.html' import durationStatLayout, tagStatLayout, tagRow %}
+
+{% block subtitle %}Statistics - durations{% endblock %}
+
+{% macro statsPopover(datapairs) %}
+<div class="row row-cols-2 align-items-center justify-content-between">
+    {% for pa, va in datapairs %}
+    <div class="col"><p class="mb-0 text-start">{{ pa }}:</p></div>
+    <div class="col"><p class="mb-0 text-end">{{ va }}</p></div>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+{% set dropdowntuples = [
+    ('Asleep', 'asleep_adjusted', 'Time asleep'),
+    ('Interruptions', 'interruption_duration', 'Interruptions'),
+    ('Awake', 'awake', 'Time awake'),
+    ('In bed', 'in_bed', 'Time in bed'),
+] %}
+
+{% set title, desc = {
+    'all': ['all sleep', 'all sleep durations'],
+    'reg': ['regular sleep', 'greater than 4 hours sleep duration'],
+    'nap': ['naps', 'between 30 minutes and 4 hours sleep duration'],
+    'pnap': ['power naps', 'less than 30 minutes sleep duration']
+}[sleeptype] %}
+
+{% block subcontent %}
+
+<div class="row justify-content-between align-items-center">
+    <div class="col-9 col-sm-auto">
+        <h1>Duration statistics - {{ title }}</h1>
+    </div>
+    <div class="col-3 col-sm-auto">
+        <div class="dropdown">
+            <button
+                class="btn btn-primary btn-sm dropdown-toggle"
+                type="button"
+                id="triggerId"
+                data-bs-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+            >
+                <span class="d-none d-md-inline">view all data</span>
+                <span class="d-inline d-md-none bi-list"></span>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="triggerId">
+                {% for h, oi, b in dropdowntuples %}
+                {% set smid = 'statsTable' + h|replace(' ', '') + 'Modal' %}
+                {% set smtid = 'statsTableModal' + h|replace(' ', '') + 'Title' %}
+                <li>
+                    <a type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#{{ smid }}" href="#">{{ b }}</a>
+                </li>
+                {% endfor %}
+            </div>
+        </div>        
+    </div>
+</div>
+<div class="row pt-2">
+    <div class="col">
+        <p><i>{{ desc }}</i></p>
+    </div>
+</div>
+<br>
+
+{% for h, oi, b in dropdowntuples %}
+{% set smid = 'statsTable' + h|replace(' ', '') + 'Modal' %}
+{% set smtid = 'statsTableModal' + h|replace(' ', '') + 'Title' %}
+<div
+    class="modal fade"
+    id="{{ smid }}"
+    tabindex="-1"
+    aria-labelledby="{{ smtid }}"
+    aria-hidden="true"
+>
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-xl modal-fullscreen-md-down" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="{{ smtid }}">{{ h }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-responsive table-bordered">
+                    <thead>
+                        {% for h in [
+                            '',
+                            'count',
+                            'mean',
+                            'standard deviation',
+                            'minimum',
+                            '1st quartile',
+                            'median',
+                            '3rd quartile',
+                            'maximum',
+                            'sum'
+                            ] %}
+                        <th class="col text-center">{{ h }}</th>
+                        {% endfor %}
+                    </thead>
+                    <tbody>
+                        {% for h, dro in [
+                            ('Last 7 days', stats.week),
+                            ('Last 30 days', stats.month),
+                            ('Last 180 days', stats.halfyear),
+                            ('All time', stats.all),
+                        ] %}
+                        <tr>
+                            <th class="text-center">{{ h }}</th>
+                                {% for p in [
+                                    'count',
+                                    'mean',
+                                    'std',
+                                    'min',
+                                    'qtr1',
+                                    'med',
+                                    'qtr3',
+                                    'max',
+                                    'sum'
+                                ] %}
+                                <td class="text-center">{{ dro.durationstats[oi][p] }}</td>
+                                {% endfor %}
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<div class="row row-cols-1 row-cols-sm-2 g-4">
+    {% for ct, i, s in [
+        ('Last 7 days', 'week', stats.week),
+        ('Last 30 days', 'month', stats.month),
+        ('Last 180 days', 'halfyear', stats.halfyear),
+        ('All time', 'all', stats.all),
+    ] %}
+    {% set da = s.durationstats.asleep %}
+    {% set ta = s.tagstats %}
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header">
+                <h2>{{ ct }}</h2>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    {% set mnd = [
+                        ('standard deviation', da.std)
+                    ] %}
+                    {% set mdd = [
+                        ('minimum', da.min),
+                        ('1st quartile', da.qtr1),
+                        ('median', da.med),
+                        ('3rd quartile', da.qtr3),
+                        ('maximum', da.max),
+                    ] %}
+                    {% for p, v, pd, so in [
+                        ('counts', da.count, 'Other counts data', none),
+                        ('total sleep', da.sum, 'Other counts data', none),
+                        ('mean sleep duration', da.mean, 'Other statistics', mnd),
+                        ('median sleep duration', da.med, 'Quantile data', mdd),
+                        ] %}
+                    <tr>
+                        <th>{{ p }}</th>
+                        <td class="text-end">
+                            <div class="row row-cols-2 align-items-center justify-content-end g-0">
+                                <div class="col-auto">
+                                    {% if so and da.count %}
+                                    <a
+                                        tabindex="0"
+                                        class="btn btn-sm"
+                                        data-bs-toggle="popover"
+                                        data-bs-trigger="focus"
+                                        data-bs-html="true"
+                                        data-bs-placement="left"
+                                        title="{{ pd }}"
+                                        data-bs-content='{{ statsPopover(so) }}'
+                                        >
+                                        <span class="text-primary-emphasis bi-info-circle"></span>
+                                    </a>
+                                    {% endif %}                                   
+                                </div>
+                                <div class="col-auto">{{ v }}</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% for tt in [
+                        'emotion',
+                        'sensation',
+                        'location',
+                        'interruption',
+                    ] %}
+                    {% set mco = ta[tt + 's'].mostcommon %}
+                    {% for p, v in [
+                        ('most common ' + tt + ('s' if mco.tags|length > 1 else ''), tagRow(tt, mco.tags)),
+                    ] %}
+                    {% set td = [
+                        ('count', mco.count),
+                        ('proportion', mco.percent),
+                    ] %}
+                    <tr>
+                        <th>{{ p }}</th>
+                        <td class="text-end">
+                            <div class="row row-cols-2 align-items-center justify-content-end g-0">
+                                <div class="col-auto">
+                                    {% if mco.count %}
+                                    <a
+                                        tabindex="0"
+                                        class="btn btn-sm"
+                                        data-bs-toggle="popover"
+                                        data-bs-trigger="focus"
+                                        data-bs-html="true"
+                                        data-bs-placement="left"
+                                        title="Counts data"
+                                        data-bs-content='{{ statsPopover(td) }}'
+                                        >
+                                        <span class="text-primary-emphasis bi-info-circle"></span>
+                                    </a>
+                                    {% endif %}                                   
+                                </div>
+                                <div class="col-auto">{{ v }}</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% endfor %}
+                </table>
+            </div>
+        </div>        
+    </div>
+    {% endfor %}
+</div>
+ <br>
+
+ <script>
+     const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
+     const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl))
+     const popover = new bootstrap.Popover('.popover-dismiss', {
+         trigger: 'focus'
+     })
+ </script>
+
+{% endblock %}

@@ -1,0 +1,125 @@
+{% extends 'journaldb/index.html' %}
+
+{% block subtitle %}Edit Record{% endblock %}
+
+{% block subcontent %}
+<div class="row justify-content-between">
+    <div class="col-auto">
+        <h1>Edit Record: {{ record.record_date.strftime('%b %d, %Y %H:%M') }}</h1>
+    </div>
+    <div class="col-auto">
+        <form method="POST" action="{{ url_for('journaldb.delete_record', record_id=record.id) }}">
+            <input type="submit" class="btn btn-outline-secondary" value="Delete" onclick="return confirm('Are you sure you want to delete this record?')">
+        </form>
+    </div>
+</div>
+<br>
+
+<script type="module">
+    import Tags from "https://cdn.jsdelivr.net/gh/lekoala/bootstrap5-tags@master/tags.js";
+    Tags.init("select", {separator: '|,|', addOnBlur:'true', allowNew: 'true', allowClear: 'false'});
+</script>
+
+<form method="POST" action="" enctype="multipart/form-data">
+    {{ form.csrf_token }}
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+        <div class="col">
+            {{ form.record(class='form-control', rows=10, placeholder='Add a record...') }}
+        </div>
+        <div class="col"></div>
+        <div class="col"></div>
+        <div class="col"></div>
+    </div>
+
+    <!-- Content of record -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.record.label(class='form-label') }}:
+        </div>
+    </div>
+
+    <!-- Date of record -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.record_date.label(class='form-label') }}:
+            {{ form.record_date(class='form-control') }}
+        </div>
+    </div>
+
+    <!-- Subject Tags -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.subjects.label(class='form-label') }}
+            {{ form.subjects(class='form-select') }}
+        </div>
+    </div>
+
+    <!-- Descriptor Tags -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.descriptors.label(class='form-label') }}
+            {{ form.descriptors(class='form-select') }}
+        </div>
+    </div>
+
+    <!-- Emotion Tags -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.emotions.label(class='form-label') }}
+            {{ form.emotions(class='form-select') }}
+        </div>
+    </div>
+
+    <!-- Add attachments -->
+    <div class="row pb-2">
+        <div class="col-md-6">
+            {{ form.attachments.label(class='form-label') }}
+            {{ form.attachments(class='form-control') }}
+        </div>
+    </div>
+    <br>
+
+    <!-- Existing attachments -->
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="row">
+                    <span class="border border-secondary rounded-3">
+                        <div class="row pt-3">
+                        <!-- TODO: Find less hacky way to fix the vertical alignment of this row -->
+                            <h5>Existing Attachments:</h5>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                {% if record.attachments %}
+                                <table class="table table-borderless table-sm">
+                                    <tbody>
+                                    {% for attachment in record.attachments %}
+                                        <tr>
+                                            <td>{{ attachment.filename }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                                {% else %}
+                                    None
+                                {% endif %}
+                            </div>
+                        </div>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br>
+
+    <!-- Submit or cancel -->
+    <div class="row">
+        <div class="col-auto pe-1">{{ form.submit(class="btn btn-primary") }}</div>
+        <div class="col-auto px-0">
+            <a type="button" class="btn btn-primary" href="{{ url_for('journaldb.record', record_id=record.id) }}">Cancel</a>
+        </div>
+    </div>
+    
+</form>
+{% endblock %}
